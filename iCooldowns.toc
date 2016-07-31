@@ -1,0 +1,20 @@
+## Interface: 70000
+## Title: iCooldowns
+## Notes: iCooldowns
+## Author: Ironi
+## Version: 1.0
+## DefaultState: enabled
+
+classes\death_knight.lua
+classes\demon_hunter.lua
+classes\druid.lua
+classes\hunter.lua
+classes\mage.lua
+classes\monk.lua
+classes\paladin.lua
+classes\priest.lua
+classes\rogue.lua
+classes\shaman.lua
+classes\warlock.lua
+classes\warrior.lua
+iCooldowns.lua
