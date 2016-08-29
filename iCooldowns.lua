@@ -151,6 +151,9 @@ function iCD:CreateNewFrame(id, row)
 	--row = 'row' .. row
 	--Create frame
 	if iCD.frames[row][id] then
+		iCD.frames[row][id].cooldownText:SetText('')
+		iCD.frames[row][id].stackText:SetText('')
+		iCD.frames[row][id]:SetAlpha(1)
 		return
 	end
 	iCD.frames[row][id] = CreateFrame('frame',nil,iCD[row])
@@ -178,8 +181,29 @@ function iCD:CreateNewFrame(id, row)
 	iCD.frames[row][id].stackText:SetFont(iCD.font, 12, 'OUTLINE')
 	iCD.frames[row][id].stackText:SetPoint('CENTER', iCD.frames[row][id], 'TOPRIGHT', 0,0)
 	iCD.frames[row][id].stackText:SetTextColor(1,1,1,1)
+	--Flash (glow)
+	iCD.frames[row][id].flash = iCD.frames[row][id]:CreateAnimationGroup()
+	iCD.frames[row][id].flash:SetLooping('REPEAT')
+	iCD.frames[row][id].flash:HookScript('OnPlay', function()
+		iCD.frames[row][id].anim = true
+	end)
+	iCD.frames[row][id].flash:HookScript('OnStop', function()
+		iCD.frames[row][id].anim = false
+	end)
+	iCD.frames[row][id].fadeOut = iCD.frames[row][id].flash:CreateAnimation('Alpha')
+	iCD.frames[row][id].fadeOut:SetDuration(0.25)
+	iCD.frames[row][id].fadeOut:SetFromAlpha(1)
+	iCD.frames[row][id].fadeOut:SetToAlpha(0)
+	iCD.frames[row][id].fadeOut:SetOrder(1)
+
+	iCD.frames[row][id].fadeIn = iCD.frames[row][id].flash:CreateAnimation('Alpha')
+	iCD.frames[row][id].fadeIn:SetDuration(0.25)
+	iCD.frames[row][id].fadeIn:SetFromAlpha(0)
+	iCD.frames[row][id].fadeIn:SetToAlpha(1)
+	iCD.frames[row][id].fadeIn:SetOrder(2)
 end
 function iCD:UpdateSkills()
+	iCD.glowEffects = {}
 	local temp = {row1 = {}, row2 = {}}
 	local function add(k,v)
 		if not v.showFunc or (v.showFunc and v.showFunc()) then
@@ -189,6 +213,9 @@ function iCD:UpdateSkills()
 				temp.row2[k] = v
 			end
 		end
+	end
+	if not iCD.class or not iCD.specID then
+		return
 	end
 	for k,v in pairs(iCD[iCD.class][iCD.specID]) do
 		if k == 'gcd' then
@@ -236,12 +263,28 @@ function iCD:UpdateSkills()
 			if v.charges then
 				iCD.frames[row][id].data.charges = true
 			end
+			if v.glow then
+				local glow = v.glow
+				if type(v.glow) == 'boolean' then
+					glow = k
+				end
+				if not iCD.glowEffects[glow] then
+					iCD.glowEffects[glow] = {{['row'] = row, ['id'] = id}}
+				else
+					table.insert(iCD.glowEffects[glow], {['row'] = row, ['id'] = id})
+				end
+			end
 			iCD.frames[row][id].tex:SetTexture(GetSpellTexture(k))
 			iCD.frames[row][id].tex:SetVertexColor(1,1,1,1)
 			iCD.frames[row][id].data.unMod = 'none'
 			--Re center
 			iCD[row]:SetWidth(id*21-1)
+			iCD.frames[row][id]:Show()
 			id = id + 1			
+		end
+		for i = id, #iCD.frames[row] do
+			iCD.frames[row][i].data = {}
+			iCD.frames[row][i]:Hide()
 		end
 	end
 end
@@ -259,6 +302,8 @@ function iCD.onUpdate()
 end
 addon:RegisterEvent('PLAYER_LOGIN')
 addon:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
+addon:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_SHOW')
+addon:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE')
 function addon:PLAYER_LOGIN()
 	iCD.class = select(2,UnitClass('player'))
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
@@ -269,4 +314,25 @@ function addon:PLAYER_SPECIALIZATION_CHANGED()
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
 	iCD:UpdateSkills()
 end
+function addon:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(spellID)
+	if iCD.glowEffects[spellID] then
+		for i = 1, #iCD.glowEffects[spellID] do
+			if not iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].anim then
+				iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id]:SetAlpha(1)
+				iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].flash:Play()
+			end
+		end
+	end
+end
+function addon:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(spellID)
+	if iCD.glowEffects[spellID] then
+		for i = 1, #iCD.glowEffects[spellID] do
+			if iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].anim then
+				iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].flash:Stop()
+				iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id]:SetAlpha(1)
+			end
+		end
+	end
+end
+
 iCD.row1:SetScript('OnUpdate', iCD.onUpdate)

@@ -10,12 +10,25 @@ iCD.PALADIN = {
 			range = true,
 			glow = true,
 			row = 1,
+			--glow = 31935,
 		},
 		[204019] = { -- Blessed Hammer
 			order = 5,
 			row = 1,
 			stack = true,
 			charges = true,
+			showFunc = function()
+				return select(4, GetTalentInfo(1, 2, 1))
+			end,
+		},
+		[53595] = { -- Hammer of the Righteous
+			order = 5,
+			row = 1,
+			stack = true,
+			charges = true,
+			showFunc = function()
+				return select(4, GetTalentInfo(1, 1, 1))
+			end,
 		},
 		[53600] = { -- Shield of the Righteous
 			order = 6,
@@ -38,10 +51,23 @@ iCD.PALADIN = {
 		[152262] = { -- Seraphim
 			order = 3,
 			row = 2,
+			showFunc = function()
+				return select(4, GetTalentInfo(7, 2, 1))
+			end,
 		},
 		[184092] = { -- Light of the Protector
 			order = 5,
 			row = 2,
+			showFunc = function()
+				return not (select(4, GetTalentInfo(5, 1, 1)))
+			end,
+		},
+		[213652] = { -- Hand of the Protector
+			order = 5,
+			row = 2,
+			showFunc = function()
+				return select(4, GetTalentInfo(5, 1, 1))
+			end,
 		},
 		[31884] = { -- Avenging Wrath
 			order = 6,
