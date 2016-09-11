@@ -2,8 +2,24 @@ local _, iCD = ...
 --options---------
 iCD.font = 'Interface\\AddOns\\iMedia\\ap.ttf'
 iCD.fontSize = 14
+local sounds = {
+	default = 'Interface\\AddOns\\iCooldowns\\Media\\Kachink.ogg',
+	text1 = 'Interface\\AddOns\\iCooldowns\\Media\\Text1.ogg',
+	text2 = 'Interface\\AddOns\\iCooldowns\\Media\\Text2.ogg',
+}
 --end-of-options--
 iCD.backdrop = {
+	bgFile = 'Interface\\Buttons\\WHITE8x8',
+	edgeFile = 'Interface\\Buttons\\WHITE8x8',
+	edgeSize = 1,
+	insets = {
+		left = 0,
+		right = 0,
+		top = 0,
+		bottom = 0,
+	}
+}
+iCD.barBD = {
 	bgFile = 'Interface\\Buttons\\WHITE8x8',
 	edgeFile = 'Interface\\Buttons\\WHITE8x8',
 	edgeSize = 1,
@@ -55,6 +71,50 @@ iCD.row2:SetSize(100,20)
 --iCD.row2:SetBackdropBorderColor(0,0,0,1)
 --iCD.row2:SetBackdropColor(0.2,0.2,0.2,0.5)
 iCD.row2:SetPoint('CENTER', iCD.row1, 'CENTER',0,-21)
+--Health bar
+iCD.hpBar = CreateFrame('Statusbar', 'iCD_Health', UIParent)
+iCD.hpBar:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
+iCD.hpBar:SetWidth(220)
+iCD.hpBar:SetHeight(16)
+iCD.hpBar:SetStatusBarColor(0.1,0.1,0.1,1)
+iCD.hpBar:SetMinMaxValues(0,1)
+iCD.hpBar:SetValue(0)
+iCD.hpBar:SetPoint('TOP', UIParent, 'CENTER', 0,-40)
+iCD.hpBar:SetBackdrop(iCD.barBD)
+iCD.hpBar:SetBackdropBorderColor(0,0,0,1)
+iCD.hpBar:SetBackdropColor(0,0,0,0)
+
+iCD.hpBar.flash = iCD.hpBar:CreateAnimationGroup()
+iCD.hpBar.flash:SetLooping('REPEAT')
+iCD.hpBar.flash:HookScript('OnPlay', function()
+	iCD.hpBar.anim = true
+end)
+iCD.hpBar.flash:HookScript('OnStop', function()
+	iCD.hpBar.anim = false
+end)
+iCD.hpBar.fadeOut = iCD.hpBar.flash:CreateAnimation('Alpha')
+iCD.hpBar.fadeOut:SetDuration(0.15)
+iCD.hpBar.fadeOut:SetFromAlpha(1)
+iCD.hpBar.fadeOut:SetToAlpha(0)
+iCD.hpBar.fadeOut:SetOrder(1)
+
+iCD.hpBar.fadeIn = iCD.hpBar.flash:CreateAnimation('Alpha')
+iCD.hpBar.fadeIn:SetDuration(0.15)
+iCD.hpBar.fadeIn:SetFromAlpha(0)
+iCD.hpBar.fadeIn:SetToAlpha(1)
+iCD.hpBar.fadeIn:SetOrder(2)
+-- GCD
+iCD.GCD = CreateFrame('Statusbar', nil, UIParent)
+iCD.GCD:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
+iCD.GCD:SetWidth(109)
+iCD.GCD:SetHeight(11)
+iCD.GCD:SetStatusBarColor(1,0.5,0,1)
+iCD.GCD:SetMinMaxValues(0,1)
+iCD.GCD:SetValue(0)
+iCD.GCD:SetPoint('TOPLEFT', iCD.hpBar, 'BOTTOMLEFT', 0,-1)
+iCD.GCD:SetBackdrop(iCD.barBD)
+iCD.GCD:SetBackdropBorderColor(0,0,0,1)
+iCD.GCD:SetBackdropColor(0,0,0,0)
 
 iCD.frames = {
 	row1 = {},
@@ -204,6 +264,7 @@ function iCD:CreateNewFrame(id, row)
 end
 function iCD:UpdateSkills()
 	iCD.glowEffects = {}
+	iCD.glowSoundEffects = {}
 	local temp = {row1 = {}, row2 = {}}
 	local function add(k,v)
 		if not v.showFunc or (v.showFunc and v.showFunc()) then
@@ -274,6 +335,17 @@ function iCD:UpdateSkills()
 					table.insert(iCD.glowEffects[glow], {['row'] = row, ['id'] = id})
 				end
 			end
+			if v.glowSound then
+				if type(v.glowSound) == 'boolean' then
+					iCD.glowSoundEffects[k] = sounds.default
+				else
+					if sounds[v.glowSound] then
+						iCD.glowSoundEffects[k] = sounds[v.glowSound]
+					else
+						iCD.glowSoundEffects[k] = v.glowSound
+					end
+				end
+			end
 			iCD.frames[row][id].tex:SetTexture(GetSpellTexture(k))
 			iCD.frames[row][id].tex:SetVertexColor(1,1,1,1)
 			iCD.frames[row][id].data.unMod = 'none'
@@ -299,15 +371,46 @@ function iCD.onUpdate()
 			iCD:updateFrame(k, 'row2')
 		end
 	end
+	local gS, gcdD = GetSpellCooldown(iCD.gcd)
+	local gCD = (gS+gcdD-GetTime())/gcdD
+	iCD.GCD:SetValue(gCD)
 end
 addon:RegisterEvent('PLAYER_LOGIN')
 addon:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
 addon:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_SHOW')
 addon:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE')
+addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
+addon:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', 'player')
+local function updateHealth()
+	local hp = UnitHealth('player')
+	local maxHP = UnitHealthMax('player')
+	local value = 0
+	if hp and maxHP then
+		value = hp/maxHP
+	end
+	if value <= 0.5 then
+		if not iCD.hpBar.anim then
+			iCD.hpBar.flash:Play()
+		end
+	elseif iCD.hpBar.anim then
+		iCD.hpBar.flash :Stop()
+	end
+	iCD.hpBar:SetValue(value)
+	local r = math.max(1-value+0.1, 0.1)
+	iCD.hpBar:SetStatusBarColor(r,0.1,0.1,1)
+	iCD.hpBar:SetBackdropBorderColor(1-value,0,0,1)
+end
+function addon:UNIT_HEALTH()
+	updateHealth()
+end
+function addon:UNIT_HEALTH_FREQUENT()
+	updateHealth()
+end
 function addon:PLAYER_LOGIN()
 	iCD.class = select(2,UnitClass('player'))
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
 	iCD:UpdateSkills()
+	updateHealth()
 end
 function addon:PLAYER_SPECIALIZATION_CHANGED()
 	iCD.class = select(2,UnitClass('player'))
@@ -322,6 +425,9 @@ function addon:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(spellID)
 				iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].flash:Play()
 			end
 		end
+	end
+	if iCD.glowSoundEffects[spellID] then
+		PlaySoundFile(iCD.glowSoundEffects[spellID], 'master')
 	end
 end
 function addon:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(spellID)

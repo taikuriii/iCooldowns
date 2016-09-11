@@ -15,14 +15,14 @@ iCD.DRUID = {
 			ignoreGCD = true,
 		},
 		[6807] = { -- Maul
-			order = 3,
+			order = 5,
 			row = 1,
 			range = true,
 			cost = true,
 			ignoreGCD = true,
 		},
 		[77758] = { -- Trash
-			order = 4,
+			order = 6,
 			row = 1,
 			range = true,
 			customRange = function()
@@ -34,7 +34,7 @@ iCD.DRUID = {
 			end,
 		},
 		[33917] = { -- Mangle
-			order = 6,
+			order = 4,
 			row = 1,
 			range = true,
 			glow = true,
@@ -46,6 +46,11 @@ iCD.DRUID = {
 			glow = true,
 		},
 		-- Row 2
+		[200851] = { -- Rage of the Sleeper
+			order = 2,
+			row = 2,
+			ignoreGCD = true,
+		},
 		[22812] = { -- Barkskin
 			order = 3,
 			row = 2,

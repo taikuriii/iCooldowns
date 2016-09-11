@@ -9,6 +9,7 @@ iCD.PALADIN = {
 			order = 4,
 			range = true,
 			glow = true,
+			glowSound = true,
 			row = 1,
 			--glow = 31935,
 		},
@@ -30,14 +31,6 @@ iCD.PALADIN = {
 				return select(4, GetTalentInfo(1, 1, 1))
 			end,
 		},
-		[53600] = { -- Shield of the Righteous
-			order = 6,
-			row = 1,
-			stack = true,
-			charges = true,
-			ignoreGCD = true,
-			range = true,
-		},
 		[20271] = { -- Judgment
 			order = 7,
 			row = 1,
@@ -55,19 +48,34 @@ iCD.PALADIN = {
 				return select(4, GetTalentInfo(7, 2, 1))
 			end,
 		},
+
 		[184092] = { -- Light of the Protector
-			order = 5,
+			order = 2,
 			row = 2,
+			ignoreGCD = true,
 			showFunc = function()
 				return not (select(4, GetTalentInfo(5, 1, 1)))
 			end,
 		},
 		[213652] = { -- Hand of the Protector
-			order = 5,
+			order = 2,
 			row = 2,
+			ignoreGCD = true,
 			showFunc = function()
 				return select(4, GetTalentInfo(5, 1, 1))
 			end,
+		},
+		[53600] = { -- Shield of the Righteous
+			order = 3,
+			row = 2,
+			stack = true,
+			charges = true,
+			ignoreGCD = true,
+			range = true,
+		},
+		[209202] = { --Eye of Tyr
+			order = 4,
+			row = 2,
 		},
 		[31884] = { -- Avenging Wrath
 			order = 6,

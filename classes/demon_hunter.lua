@@ -53,14 +53,6 @@ iCD.DEMONHUNTER = {
 	[581] = { --Vengeance
 		-- Row 1
 		gcd = 203782,
-		[203720] = { -- Demon Spikes
-			order = 1,
-			row = 1,
-			cost = true,
-			stack = true,
-			ignoreGCD = true,
-			charges = true,
-		},
 		[228477] = { -- Soul Cleave
 			order = 2,
 			row = 1,
@@ -71,9 +63,31 @@ iCD.DEMONHUNTER = {
 			order = 6,
 			row = 1,
 		},
+		[207407] = { -- Soul Carver
+			order = 7,
+			row = 1,
+			range = true,
+		},
 		[204596] = { -- Sigil of Flame
 			order = 8,
 			row = 1,
+		},
+		[212084] = { -- Fel Devastation
+			order = 9,
+			row = 1,
+			cost = true,
+			showFunc = function()
+				return select(4, GetTalentInfo(6, 1, 1))
+			end,
+		},
+		[218679] = { -- Spirit Bomb
+			order = 9,
+			row = 1,
+			showFunc = function()
+				return select(4, GetTalentInfo(6, 3, 1))
+			end,
+			range = true,
+			stackFunc = function() return GetSpellCount(228477) end,
 		},
 		[204157] = { -- Throw Glaive
 			order = 10,
@@ -82,15 +96,34 @@ iCD.DEMONHUNTER = {
 		},
 		
 		-- Row 2
-		[204021] = { -- Fiery Brand
-			order = 3,
+		[203720] = { -- Demon Spikes
+			order = 2,
 			row = 2,
-			range = true,
+			cost = true,
+			stack = true,
+			ignoreGCD = true,
+			charges = true,
+		},
+		[227225] = { -- Soul Barrier
+			order = 2,
+			row = 2,
+			showFunc = function()
+				return select(4, GetTalentInfo(7, 3, 1))
+			end,
+			cost = true,
 		},
 		[218256] = { -- Empower Wards
-			order = 4,
-			row = 2, 
+			order = 3,
+			row = 2,
+			ignoreGCD = true,
 		},
+		[204021] = { -- Fiery Brand
+			order = 4,
+			row = 2,
+			range = true,
+			ignoreGCD = true,
+		},
+
 		[187827] = { -- Metamorphosis
 			order = 5,
 			row = 2, 
