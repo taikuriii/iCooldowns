@@ -28,6 +28,15 @@ iCD.WARRIOR = {
 	},
 	[73] = { --Protection
 		gcd = 20243, -- Devastate
+		power = {
+			pos = {
+				x = -30,
+				y = -8,
+			},
+			func = function()
+				return UnitPower('player', 1)
+			end,
+		},
 		-- Row 1
 		row1 = {
 			[23922] = { -- Shield Slam

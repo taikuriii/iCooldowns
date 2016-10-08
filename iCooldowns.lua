@@ -184,6 +184,13 @@ iCD.textAnchor = CreateFrame('frame', nil, UIParent)
 iCD.textAnchor:SetSize(40,20)
 iCD.textAnchor:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,2)
 
+--Power Text
+iCD.powerText = iCD.GCD:CreateFontString('iCD_powerText')
+iCD.powerText:SetFont(iCD.font, 16, 'OUTLINE')
+iCD.powerText:SetJustifyH('RIGHT')
+iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -120, -150)
+iCD.powerText:SetText('')
+
 iCD.frames = {
 	row1 = {},
 	row2 = {},
@@ -1010,6 +1017,12 @@ end
 function addon:UNIT_HEAL_ABSORB_AMOUNT_CHANGED()
 	iCD:updateEH()
 end
+function addon:UNIT_POWER()
+	iCD.powerText:SetText(iCD.powerFunc())
+end
+function addon:UNIT_POWER_FREQUENT()
+	iCD.powerText:SetText(iCD.powerFunc())
+end
 function addon:PLAYER_LOGIN()
 	iCD.class = select(2,UnitClass('player'))
 	iCD.player = UnitGUID('player')
@@ -1022,6 +1035,22 @@ function addon:PLAYER_LOGIN()
 	if iCD.specID == 581 then
 		iCD.textTimers = {}
 	end
+	if iCD[iCD.class][iCD.specID].power then
+		if iCD[iCD.class][iCD.specID].power.pos then
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD[iCD.class][iCD.specID].power.pos.x, iCD[iCD.class][iCD.specID].power.pos.y)
+		else
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -120, -150)
+		end
+		iCD.powerFunc = iCD[iCD.class][iCD.specID].power.func
+		addon:RegisterUnitEvent('UNIT_POWER', 'player')
+		addon:RegisterUnitEvent('UNIT_POWER_FREQUENT', 'player')
+		iCD.powerText:SetText(iCD.powerFunc())
+	else
+		addon:UnregisterEvent('UNIT_POWER')
+		addon:UnregisterEvent('UNIT_POWER_FREQUENT')
+		iCD.powerText:SetText('')
+		iCD.powerFunc = nil
+	end
 end
 function addon:PLAYER_SPECIALIZATION_CHANGED()
 	iCD.class = select(2,UnitClass('player'))
@@ -1030,6 +1059,22 @@ function addon:PLAYER_SPECIALIZATION_CHANGED()
 	iCD:updateBuffList()
 	iCD:updateCombatLogStuff()
 	iCD:updateOnCD()
+	if iCD.class and iCD.specID and iCD[iCD.class][iCD.specID].power then
+		if iCD[iCD.class][iCD.specID].power.pos then
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD[iCD.class][iCD.specID].power.pos.x, iCD[iCD.class][iCD.specID].power.pos.y)
+		else
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -120, -150)
+		end
+		iCD.powerFunc = iCD[iCD.class][iCD.specID].power.func
+		addon:RegisterUnitEvent('UNIT_POWER', 'player')
+		addon:RegisterUnitEvent('UNIT_POWER_FREQUENT', 'player')
+		iCD.powerText:SetText(iCD.powerFunc())
+	else
+		addon:UnregisterEvent('UNIT_POWER')
+		addon:UnregisterEvent('UNIT_POWER_FREQUENT')
+		iCD.powerText:SetText('')
+		iCD.powerFunc = nil
+	end
 	if iCD.specID == 581 then
 		iCD.textTimers = {}
 	else

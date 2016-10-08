@@ -52,6 +52,15 @@ iCD.DEMONHUNTER = {
 	[581] = { --Vengeance
 		-- Row 1
 		gcd = 203782,
+		power = {
+			pos = {
+				x = -30,
+				y = -8,
+			},
+			func = function()
+				return UnitPower('player', 18)
+			end,
+		},
 		row1 = {
 			[213241] = { -- Felblade
 				order = 1,
@@ -159,7 +168,15 @@ iCD.DEMONHUNTER = {
 				end,
 			}, 
 		},
-		buffsI = {},
+		buffsI = {
+			--[178740] = {}, -- Immolation Aura
+			[203819] = {}, -- Demon Spikes
+			[204598] = { -- Sigil of Flame
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 2, 1))
+				end,
+			},
+		},
 		buffsC = {},
 	},
 	['all'] = {

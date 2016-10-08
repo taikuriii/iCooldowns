@@ -6,6 +6,23 @@ iCD.DRUID = {
 	},
 	[104] = { --Guardian
 		gcd = 8921, -- Moonfire
+		power = {
+			pos = {
+				x = -30,
+				y = -8,
+			},
+			func = function()
+				local form = GetShapeshiftFormID()
+				if form then
+					if form == 5 then -- Bear form
+						return UnitPower('player', 1)
+					elseif form == 1 then
+						return UnitPower('player', 3)
+					end
+				end
+				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0))*100
+			end,
+		},
 		-- Row 1
 		row1 = {
 			[6807] = { -- Maul
@@ -78,13 +95,60 @@ iCD.DRUID = {
 				ignoreGCD = true,
 			},
 		},
-		row4 = {},
-		row5 = {},
-		buffsI = {},
+		row4 = {
+			[1850] = {}, -- Dash
+			[99] = {}, -- Incapacitating Roar
+			[5211] = { -- Mighty Bash
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 1, 1))
+				end,
+			},
+			[2782] = {}, --Remove Corruption
+			[77761] = {}, --Stampeding Roar
+			[6795] = {}, -- Growl
+		},
+		row5 = {
+			[200851] = {}, -- Rage of the Sleeper
+			[61336] = {}, -- Survival Instincts
+		},
+		buffsI = {
+			[22842] = {}, -- Frenzied Regeneration
+			[192081] = { -- Ironfur
+				stack = true,
+			},
+			[192083] = {}, -- Mark of Ursol
+			[213680] = { -- Guardian of Elune
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 2, 1))
+				end,
+			},
+			[213708] = { -- Galactic Guardian
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 3, 1))
+				end,
+			},
+		},
 		buffsC = {},
 	},
 	[105] = { --Restoration
 		gcd = 8921, -- Moonfire
+		power = {
+			pos = {
+				x = -30,
+				y = -8,
+			},
+			func = function()
+				local form = GetShapeshiftFormID()
+				if form then
+					if form == 5 then -- Bear form
+						return UnitPower('player', 1)
+					elseif form == 1 then
+						return UnitPower('player', 3)
+					end
+				end
+				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0))*100
+			end,
+		},
 		-- Row 1
 		row1 = {
 			[18562] = { -- Swiftmend
@@ -137,18 +201,42 @@ iCD.DRUID = {
 		},
 		-- Row 3
 		row3 = {},
-		row4 = {},
-		row5 = {},
-		buffsI = {},
+		row4 = {
+			[88423] = {}, -- Nature's Cure
+			[102793] = {}, -- Ursol's Vortex
+			[102280] = { -- Displacer Beast
+				showFunc = function()
+					return select(4, GetTalentInfo(2, 2, 1))
+				end,
+			},
+		},
+		row5 = {
+			[22812] = {}, -- Barkskin
+		},
+		buffsI = {
+			[208253] = {}, -- Essence of G'hanir
+			[29166] = {}, -- Innervate
+			[16870] = { -- Clearcasting
+				stack = true,
+			}, 
+		},
 		buffsC = {},
 	},
 	['all'] = {
 		row1 = {},
 		row2 = {},
 		row3 = {},
-		row4 = {},
-		row5 = {},
+		row4 = {
+			[1850] = {}, -- Dash
+		},
+		row5 = {
+			[22812] = {}, -- Barkskin
+			
+		},
 		buffsI = {},
-		buffsC = {},
+		buffsC = {
+			
+			
+		},
 	},
 }

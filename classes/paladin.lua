@@ -2,6 +2,15 @@ local _, iCD = ...
 iCD.PALADIN = {
 	[65] = { --Holy
 		gcd = 19750, -- Flash of Light
+		power = {
+			pos = {
+				x = -30,
+				y = -8,
+			},
+			func = function()
+				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0))*100
+			end,
+		},
 		row1 = {
 			[20473] = { -- Holy Shock
 				order = 1,
