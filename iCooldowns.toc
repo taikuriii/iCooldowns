@@ -17,4 +17,5 @@ classes\rogue.lua
 classes\shaman.lua
 classes\warlock.lua
 classes\warrior.lua
+classes\general.lua
 iCooldowns.lua
