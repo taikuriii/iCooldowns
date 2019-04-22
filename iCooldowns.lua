@@ -26,6 +26,11 @@ iCD.direction = { -- horizontal = true
 	['buffsC'] = true,
 }
 --end-of-options--
+iCD.colors = {
+	['green'] = '|cff00ff00',
+	['yellow'] = '',
+	['red'] = '|cffff1a1a',
+}
 iCD.backdrop = {
 	bgFile = 'Interface\\Buttons\\WHITE8x8',
 	edgeFile = 'Interface\\Buttons\\WHITE8x8',
@@ -84,13 +89,36 @@ local function spairs(t, order)
         end
     end
 end
+function iCD.UnitBuff(target,buffName)
+	for i = 1, 41 do -- Buffs
+		local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID,canApplyAura,isBossDebuff,nameplateShowAll,timeMod,value1,value2,value3 = UnitBuff(target, i)
+		if name == nil then
+			return
+		elseif buffName == name then
+			return count, duration, expirationTime, value1, value2, value3
+		end
+	end
+	return
+end
+
+function iCD.UnitDebuff(buffName, target)
+
+	for i = 1, 41 do -- Debuffs
+		local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID,canApplyAura,isBossDebuff,nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, 'player')
+		if name == nil then
+			return nil, nil, nil
+		elseif buffName == name then
+			return count, duration, expirationTime, value1, value2, value3
+		end
+	end
+	return
+end
 local addon = CreateFrame('Frame')
 addon:SetScript("OnEvent", function(self, event, ...)
 	self[event](self, ...)
 end)
-
+iCD.customSpellTimers = {}
 --Health bar
-
 iCD.hpBar = CreateFrame('Statusbar', 'iCD_Health', UIParent)
 iCD.hpBar:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
 iCD.hpBar:SetWidth(220)
@@ -98,10 +126,15 @@ iCD.hpBar:SetHeight(16)
 iCD.hpBar:SetStatusBarColor(0.1,0.1,0.1,1)
 iCD.hpBar:SetMinMaxValues(0,1)
 iCD.hpBar:SetValue(0)
-iCD.hpBar:SetPoint('TOP', UIParent, 'CENTER', 0,-150)
-iCD.hpBar:SetBackdrop(iCD.barBD)
-iCD.hpBar:SetBackdropBorderColor(0,0,0,1)
-iCD.hpBar:SetBackdropColor(0,0,0,0)
+iCD.hpBar:SetPoint('TOP', UIParent, 'CENTER', -960,-150)
+
+iCD.hpBar.bg = CreateFrame('frame', nil, iCD.hpBar)
+iCD.hpBar.bg:SetWidth(220)
+iCD.hpBar.bg:SetHeight(16)
+iCD.hpBar.bg:SetPoint('CENTER', iCD.hpBar, 'CENTER',0,0)
+iCD.hpBar.bg:SetBackdrop(iCD.barBD)
+iCD.hpBar.bg:SetBackdropBorderColor(0,0,0,1)
+iCD.hpBar.bg:SetBackdropColor(0,0,0,0)
 
 iCD.hpBar.flash = iCD.hpBar:CreateAnimationGroup()
 iCD.hpBar.flash:SetLooping('REPEAT')
@@ -175,21 +208,59 @@ iCD.GCD:SetStatusBarColor(1,0.5,0,1)
 iCD.GCD:SetMinMaxValues(0,1)
 iCD.GCD:SetValue(0)
 iCD.GCD:SetPoint('TOPLEFT', iCD.hpBar, 'BOTTOMLEFT', 0,-1)
-iCD.GCD:SetBackdrop(iCD.barBD)
-iCD.GCD:SetBackdropBorderColor(0,0,0,1)
-iCD.GCD:SetBackdropColor(0,0,0,0)
+
+iCD.GCD.bg = CreateFrame('frame', nil, iCD.GCD)
+iCD.GCD.bg:SetWidth(109)
+iCD.GCD.bg:SetHeight(11)
+iCD.GCD.bg:SetPoint('CENTER', iCD.GCD, 'CENTER',0,0)
+iCD.GCD.bg:SetBackdrop(iCD.barBD)
+iCD.GCD.bg:SetBackdropBorderColor(0,0,0,1)
+iCD.GCD.bg:SetBackdropColor(0,0,0,0)
 
 -- Anchor for texts above health bar
 iCD.textAnchor = CreateFrame('frame', nil, UIParent)
 iCD.textAnchor:SetSize(40,20)
 iCD.textAnchor:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,2)
 
---Power Text
+-- Power Text
 iCD.powerText = iCD.GCD:CreateFontString('iCD_powerText')
 iCD.powerText:SetFont(iCD.font, 16, 'OUTLINE')
 iCD.powerText:SetJustifyH('RIGHT')
-iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -120, -150)
+iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -1080, -150)
 iCD.powerText:SetText('')
+
+-- Out of range warning
+iCD.outOfRangeFrame = CreateFrame('frame', nil, UIParent)
+iCD.outOfRange = iCD.outOfRangeFrame:CreateFontString('iCD_outOfRange')
+iCD.outOfRange:SetFont(iCD.font, 32, 'OUTLINE')
+iCD.outOfRange:SetJustifyH('CENTER')
+iCD.outOfRange:SetPoint('CENTER', UIParent, 'CENTER', -960, 50)
+iCD.outOfRange:SetText('OUT OF RANGE')
+iCD.outOfRange:SetTextColor(1,0,0)
+iCD.outOfRange:Hide()
+iCD.outOfRange.color = 1 -- red
+
+iCD.outOfRange.flash = iCD.outOfRange:CreateAnimationGroup()
+iCD.outOfRange.flash:SetLooping('REPEAT')
+iCD.outOfRange.flash:HookScript('OnPlay', function()
+	iCD.outOfRange.anim = true
+	--iCD.outOfRange:Show()
+end)
+iCD.outOfRange.flash:HookScript('OnStop', function()
+	iCD.outOfRange.anim = false
+--	iCD.outOfRange:Hide()
+end)
+iCD.outOfRange.fadeOut = iCD.outOfRange.flash:CreateAnimation('Alpha')
+iCD.outOfRange.fadeOut:SetDuration(.25)
+iCD.outOfRange.fadeOut:SetFromAlpha(1)
+iCD.outOfRange.fadeOut:SetToAlpha(0)
+iCD.outOfRange.fadeOut:SetOrder(1)
+
+iCD.outOfRange.fadeIn = iCD.outOfRange.flash:CreateAnimation('Alpha')
+iCD.outOfRange.fadeIn:SetDuration(.25)
+iCD.outOfRange.fadeIn:SetFromAlpha(0)
+iCD.outOfRange.fadeIn:SetToAlpha(1)
+iCD.outOfRange.fadeIn:SetOrder(2)
 
 iCD.frames = {
 	row1 = {},
@@ -201,6 +272,54 @@ iCD.frames = {
 	buffsC = {},
 }
 iCD.textFrames = {}
+local icdRangeCheckTimer = 0
+function iCD:checkRange(force)
+	local t = GetTime()
+	if force or (t > icdRangeCheckTimer + 0.1) then
+		icdRangeCheckTimer = t
+		if UnitExists('target') then
+			if IsSpellInRange(iCD.outOfRangeSpells.range, 'target') == 0 then
+				if iCD.outOfRange.color == 2 then
+					iCD.outOfRange:SetTextColor(1,0,0)
+					iCD.outOfRange.color = 1
+				end
+			else
+				if iCD.outOfRange.color == 1 then
+					iCD.outOfRange:SetTextColor(1,.5,0)
+					iCD.outOfRange.color = 2
+				end
+			end
+			if IsSpellInRange(iCD.outOfRangeSpells.main, 'target') == 0 then
+				if not iCD.outOfRange.anim then
+					iCD.outOfRange.flash:Play()
+					iCD.outOfRange:Show()
+				end
+			elseif iCD.outOfRange.anim then
+				iCD.outOfRange.flash:Stop()
+				iCD.outOfRange:Hide()
+			end
+		else
+			if iCD.outOfRange.anim then
+				iCD.outOfRange.flash:Stop()
+				iCD.outOfRange:Hide()
+			end
+		end
+	end
+end
+function iCD:resetGlows()
+	if iCD.glowEffects then
+		for spellID, v in pairs(iCD.glowEffects) do -- Stop animations
+			for i = 1, #v do
+				if iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].anim then
+					iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id].flash:Stop()
+					iCD.frames[iCD.glowEffects[spellID][i].row][iCD.glowEffects[spellID][i].id]:SetAlpha(1)
+				end
+			end
+		end
+	end
+	iCD.glowEffects = {}
+	iCD.glowSoundEffects = {}
+end
 function iCD:createTextString(id)
 	if not iCD.textFrames[id] then
 		iCD.textFrames[id] = iCD.textAnchor:CreateFontString()
@@ -216,49 +335,65 @@ end
 function iCD:updateFrame(id, row)
 	local data = iCD.frames[row][id].data
 	if buffFrames[row] then
-		local text = data.endTime-GetTime()
-		if text > 60 then
-			local s = (math.floor(text * 10 + 0.5) / 10)%60
-			local m = math.floor(text/60)
-			iCD.frames[row][id].cooldownText:SetFormattedText('%d:%.2d', m,s)
-		elseif text > 5 then
-			iCD.frames[row][id].cooldownText:SetFormattedText('%.0f', text)
-		elseif text > 0 then
-			iCD.frames[row][id].cooldownText:SetFormattedText('|cffff1a1a%.1f', text)
-		else
-			iCD.frames[row][id].cooldownText:SetText('')
-		end
-		if text <= 3 then
-			if not iCD.frames[row][id].anim then
-				iCD.frames[row][id]:SetAlpha(1)
-				iCD.frames[row][id].flash:Play()
+		if data.customText then
+			text, f = data.customText(data)
+			if f then
+				iCD.frames[row][id].cooldownText:SetFormattedText(f, text)
+			else
+				iCD.frames[row][id].cooldownText:SetText(text)
 			end
-		elseif iCD.frames[row][id].anim then
-			iCD.frames[row][id]:SetAlpha(1)
-			iCD.frames[row][id].flash:Stop()
+		else
+			local text = data.endTime-GetTime()
+			if text > 60 then
+				local s = (math.floor(text * 10 + 0.5) / 10)%60
+				local m = math.floor(text/60)
+				iCD.frames[row][id].cooldownText:SetFormattedText('%d:%.2d', m,s)
+			elseif text > 5 then
+				iCD.frames[row][id].cooldownText:SetFormattedText('%.0f', text)
+			elseif text > 0 then
+				iCD.frames[row][id].cooldownText:SetFormattedText('|cffff1a1a%.1f', text)
+			else
+				iCD.frames[row][id].cooldownText:SetText('')
+			end
+
+			if text <= 3 and text >= 0 then
+				if not iCD.frames[row][id].anim then
+					iCD.frames[row][id]:SetAlpha(1)
+					iCD.frames[row][id].flash:Play()
+				end
+			elseif iCD.frames[row][id].anim then
+				iCD.frames[row][id]:SetAlpha(1)
+				iCD.frames[row][id].flash:Stop()
+			end
 		end
 	else
 		local cost = false
 		local range = false
 		if data.customCost then
-			if not data.customCost() then
+			if not data.customCost(data) then
 				cost = true
 			end
-		elseif data.cost then 
+		elseif data.cost then
 			if select(2, IsUsableSpell(data.spellName)) then
 				cost = true
 			end
 		end
 		if data.customRange then
-			if not data.customRange() then
+			if not data.customRange(data) then
 				range = true
 			end
 		elseif data.range then
-			if IsSpellInRange(data.spellName, 'target') == 0 then
+			local rangeSpell = data.customRangeSpell or data.spellName
+			if IsSpellInRange(rangeSpell, 'target') == 0 then
 				range = true
 			end
 		end
-		if range then 
+		if data.AM and data.AM(data) then
+			if data.unMod ~= 'am' then
+				iCD.frames[row][id].tex:SetVertexColor(1,0,1,1)
+				iCD.frames[row][id].data.unMod = 'am'
+			end
+		elseif range then
 			if data.unMod ~= 'range' then
 				iCD.frames[row][id].tex:SetVertexColor(1,0,0,1)
 				iCD.frames[row][id].data.unMod = 'range'
@@ -276,12 +411,43 @@ function iCD:updateFrame(id, row)
 		end
 		local text = 0
 		if data.customText then
-			text = data.customText()
-			iCD.frames[row][id].cooldownText:SetText(text)
+			text, f = data.customText(data)
+			if f then
+				iCD.frames[row][id].cooldownText:SetFormattedText(f, text)
+			else
+				iCD.frames[row][id].cooldownText:SetText(text)
+			end
 		else
+			local gS, gcdD = GetSpellCooldown(iCD.gcd)
+			local gCD = gS+gcdD-GetTime()
 			local s, cd = 0,0
 			if data.customDuration then
 				text = data.customDuration - GetTime()
+			elseif data.showTimeAfterGCD then
+				if data.charges then
+					local c,m,sd,d = GetSpellCharges(data.usedBy)
+					if c == m then
+						s = 0
+						cd = d
+					else
+						s = sd
+						cd = d
+					end
+				elseif data.item or data.usedBy < 0 then
+					s,cd = GetItemCooldown(data.usedBy > 0 and data.usedBy or -data.usedBy)
+				else
+					s,cd = GetSpellCooldown(data.usedBy)
+				end
+				local cdD = s+cd-GetTime()
+				if s > 0 then
+					if gcdD ~= cd then
+						if gCD > 0 then
+							text = cdD - gCD
+						else
+							text = cdD
+						end
+					end
+				end
 			else
 				if data.charges then
 					local c,m,sd,d = GetSpellCharges(data.usedBy)
@@ -292,8 +458,8 @@ function iCD:updateFrame(id, row)
 						s = sd
 						cd = d
 					end
-				elseif data.item then
-					s,cd = GetItemCooldown(data.usedBy)				
+				elseif data.usedBy < 0 then
+					s,cd = GetItemCooldown(-data.usedBy)
 				else
 					s,cd = GetSpellCooldown(data.usedBy)
 				end
@@ -302,51 +468,94 @@ function iCD:updateFrame(id, row)
 					if data.ignoreGCD then
 						text = cdD
 					else
-						local gS, gcdD = GetSpellCooldown(iCD.gcd)
-						local gCD = gS+gcdD-GetTime()
-						if (gCD + 0.05) < cdD then
+						--local gS, gcdD = GetSpellCooldown(iCD.gcd)
+						--local gCD = gS+gcdD-GetTime()
+						--gCD = gS+gcdD-GetTime()
+						--if gCD < cdD then
+						--print(data.usedBy, cd, gcdD)
+						if gcdD ~= cd then
 							text = cdD
 						end
 					end
 				end
 			end
 			if row == 'row2' then
-				if not iCD.frames[row][id].onCD and text > 0 then
-					iCD.frames[row][id]:SetAlpha(0.35)
-					iCD.frames[row][id].onCD = true
-				elseif text == 0 and iCD.frames[row][id].onCD then
+				if text > 0 then
+					local fade = true
+					if data.stack then
+						local c,m,sd,d = GetSpellCharges(data.usedBy)
+						if c > 0 then
+							fade = false
+						end
+					end
+					if fade then
+						iCD.frames[row][id]:SetAlpha(0.35)
+					else
+						iCD.frames[row][id]:SetAlpha(1)
+					end
+				elseif text == 0 then
 					iCD.frames[row][id]:SetAlpha(1)
 					iCD.frames[row][id].onCD = false
 				end
 			end
-				
-			if text > 60 then
-				local s = (math.floor(text * 10 + 0.5) / 10)%60
-				local m = math.floor(text/60)
-				iCD.frames[row][id].cooldownText:SetFormattedText('%d:%.2d', m,s)
-			elseif text > 5 then
-				iCD.frames[row][id].cooldownText:SetFormattedText('%.0f', text)
-			elseif text > 0 then
-				iCD.frames[row][id].cooldownText:SetFormattedText('|cffff1a1a%.1f', text)
-			else
-				if row == 'row4' then
-					iCD:updateCDs()
+			if data.showTimeAfterGCD and gcdD > 0 then
+				if text > 60 then
+					local s = (math.floor(text * 10 + 0.5) / 10)%60
+					local m = math.floor(text/60)
+					iCD.frames[row][id].cooldownText:SetFormattedText('%d:%.2d', m,s)
+				elseif text > 5 then
+					iCD.frames[row][id].cooldownText:SetFormattedText('|cffFF9999%.0f', text)
+				elseif text > 0 then
+					if text <= 0.05 then
+						iCD.frames[row][id].cooldownText:SetText('')
+					elseif text < 2 then
+						iCD.frames[row][id].cooldownText:SetFormattedText('|cffCCFFFF%.1f', text)
+					else
+						iCD.frames[row][id].cooldownText:SetFormattedText('|cfffc2ffc%.1f', text)
+					end
 				else
-					iCD.frames[row][id].cooldownText:SetText('')
+					if row == 'row4' then
+						iCD:updateCDs()
+					else
+						iCD.frames[row][id].cooldownText:SetText('')
+					end
+				end
+			else
+				if text > 60 then
+					local s = (math.floor(text * 10 + 0.5) / 10)%60
+					local m = math.floor(text/60)
+					iCD.frames[row][id].cooldownText:SetFormattedText('%d:%.2d', m,s)
+				elseif text > 5 then
+					iCD.frames[row][id].cooldownText:SetFormattedText('%.0f', text)
+				elseif text > 0 then
+					if row == 'row1' and ((gCD + 0.1 > text) or (gcdD == 0 and text < 0.3))then
+						iCD.frames[row][id].cooldownText:SetFormattedText('|cff00ff00%.1f', text)
+					else
+						iCD.frames[row][id].cooldownText:SetFormattedText('|cffff1a1a%.1f', text)
+					end
+				else
+					if row == 'row4' then
+						iCD:updateCDs()
+					else
+						iCD.frames[row][id].cooldownText:SetText('')
+					end
 				end
 			end
 		end
-		if data.stackFunc then
-			iCD.frames[row][id].stackText:SetText(data.stackFunc())
-		elseif data.stack then
-			local c,m,sd,d = GetSpellCharges(data.usedBy)
-			iCD.frames[row][id].stackText:SetText(c)
+	end
+	if data.stackFunc then
+		local txt, txtFormat = data.stackFunc(data)
+		if txtFormat then
+			iCD.frames[row][id].stackText:SetFormattedText(txtFormat, txt)
+		else
+			iCD.frames[row][id].stackText:SetText(txt)
 		end
+	elseif data.stack then
+		local c,m,sd,d = GetSpellCharges(data.usedBy)
+		iCD.frames[row][id].stackText:SetText(c)
 	end
 end
 function iCD:CreateNewFrame(id, row)
-	--row = 'row' .. row
-	--Create frame
 	if iCD.frames[row][id] then
 		iCD.frames[row][id].cooldownText:SetText('')
 		iCD.frames[row][id].stackText:SetText('')
@@ -371,14 +580,14 @@ function iCD:CreateNewFrame(id, row)
 			iCD.frames[row][id]:SetPoint('BOTTOM', iCD[row] , 'BOTTOM', 0, 0)
 		else
 			iCD.frames[row][id]:SetPoint('BOTTOM', iCD.frames[row][id-1], 'TOP', 0, 1)
-		end	
+		end
 	end
 	--Icon
 	iCD.frames[row][id].tex = iCD.frames[row][id]:CreateTexture()
 	iCD.frames[row][id].tex:SetAllPoints(iCD.frames[row][id])
 	--Cooldown
 	iCD.frames[row][id].cooldownText = iCD.frames[row][id]:CreateFontString()
-	
+
 	if row == 'row5' then
 		iCD.frames[row][id].cooldownText:SetFont(iCD.font, iCD.fontSize+4, 'OUTLINE')
 		iCD.frames[row][id].cooldownText:SetPoint('CENTER', iCD.frames[row][id], 'CENTER', 0,0)
@@ -440,8 +649,8 @@ function iCD:updateCDs()
 				s = sd
 				cd = d
 			end
-		elseif v.item then
-			s, cd = GetItemCooldown(k)
+		elseif k < 0 then
+			s, cd = GetItemCooldown(-k)
 		else
 			s,cd = GetSpellCooldown(k)
 		end
@@ -472,9 +681,9 @@ function iCD:updateCDs()
 		if v.customDuration then
 			iCD.frames.row4[id].data.customDuration = v.customDuration
 		end
-		if v.item then
-			iCD.frames.row4[id].data.item = true
-			local itemName,_,_,_,_,_,_,_,_,icon = GetItemInfo(k)
+		if k < 0 then
+			--iCD.frames.row4[id].data.item = true
+			local itemName,_,_,_,_,_,_,_,_,icon = GetItemInfo(-k)
 			iCD.frames.row4[id].data.spellName = itemName
 			iCD.frames.row4[id].tex:SetTexture(icon)
 		else
@@ -495,6 +704,9 @@ function iCD:updateCDs()
 		if v.charges then
 			iCD.frames.row4[id].data.charges = true
 		end
+		if v.showTimeAfterGCD then
+			iCD.frames.row4[id].data.showTimeAfterGCD = true
+		end
 		iCD.frames.row4[id].tex:SetVertexColor(1,1,1,1)
 		iCD.frames.row4[id].data.unMod = 'none'
 		iCD.frames.row4[id]:Show()
@@ -511,16 +723,76 @@ function iCD:updateOnCD()
 		return
 	end
 	local temp = {}
-	for k,v in pairs(iCD[iCD.class][iCD.specID].row4) do
-		if not v.showFunc or (v.showFunc and v.showFunc()) then
-			temp[k] = v
+	for k,v in pairs(iCD.general.row4) do
+		if not v.showFunc or (v.showFunc and v.showFunc()) and (not v.level or v.level <= iCD.level) then
+
+			if v.itemReq or k < 0 then
+				if type(v.itemReq) == 'table' then
+					for k,_ in pairs(v.itemReq) do
+						if IsEquippedItem(k) then
+							temp[k] = v
+						end
+					end
+				elseif k < 0 then
+					if IsEquippedItem(-k) then
+						temp[k] = v
+					end
+				else
+					if IsEquippedItem(v.itemReq) then
+						temp[k] = v
+					end
+				end
+			else
+				temp[k] = v
+			end
 		end
-	end	
-	for k,v in pairs(iCD[iCD.class].all.row4) do
+	end
+	for k,v in pairs(iCD.spellData.spec.row4) do
 		if not v.showFunc or (v.showFunc and v.showFunc()) then
-			temp[k] = v
+			if v.itemReq or k < 0 then
+				if type(v.itemReq) == 'table' then
+					for k,_ in pairs(v.itemReq) do
+						if IsEquippedItem(k) then
+							temp[k] = v
+						end
+					end
+				elseif k < 0 then
+					if IsEquippedItem(-k) then
+						temp[k] = v
+					end
+				else
+					if IsEquippedItem(v.itemReq) then
+						temp[k] = v
+					end
+				end
+			else
+				temp[k] = v
+			end
 		end
-	end	
+	end
+	for k,v in pairs(iCD.spellData.all.row4) do
+		if not v.showFunc or (v.showFunc and v.showFunc()) then
+			if v.itemReq or k < 0 then
+				if type(v.itemReq) == 'table' then
+					for k,_ in pairs(v.itemReq) do
+						if IsEquippedItem(k) then
+							temp[k] = v
+						end
+					end
+				elseif k < 0 then
+					if IsEquippedItem(-k) then
+						temp[k] = v
+					end
+				else
+					if IsEquippedItem(v.itemReq) then
+						temp[k] = v
+					end
+				end
+			else
+				temp[k] = v
+			end
+		end
+	end
 	iCD.onCD = temp
 	iCD:updateCDs()
 end
@@ -529,7 +801,7 @@ function iCD:updateBuffs()
 	local tempI = {}
 	local tempC = {}
 	for i = 1, 41 do -- Buffs
-		local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', i)
+		local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('player', i)
 		if not name then
 			break
 		else
@@ -539,11 +811,20 @@ function iCD:updateBuffs()
 					texture = icon,
 				}
 				if iCD.buffs[spellID].stack then
-					if type(iCD.buffs[spellID].stack) == 'string' then
-						data.stack = iCD.buffs[spellID].stack
+					if iCD.buffs[spellID].stackFunc then
+						data.stackFunc = iCD.buffs[spellID].stackFunc
+					elseif type(iCD.buffs[spellID].stack) == 'string' then
+						if iCD.buffs[spellID].stack == 'caster' then
+							data.stack = UnitName(sourceUnit)
+						else
+							data.stack = iCD.buffs[spellID].stack
+						end
 					else
 						data.stack = count
 					end
+				end
+				if iCD.buffs[spellID].customText then
+					data.customText = iCD.buffs[spellID].customText
 				end
 				temp[spellID] = data
 			end
@@ -553,11 +834,16 @@ function iCD:updateBuffs()
 					texture = icon,
 				}
 				if iCD.BuffsI[spellID].stack then
-					if type(iCD.BuffsI[spellID].stack) == 'string' then
+					if iCD.BuffsI[spellID].stackFunc then
+						data.stackFunc = iCD.BuffsI[spellID].stackFunc
+					elseif type(iCD.BuffsI[spellID].stack) == 'string' then
 						data.stack = iCD.BuffsI[spellID].stack
 					else
 						data.stack = count
 					end
+				end
+				if iCD.BuffsI[spellID].customText then
+					data.customText = iCD.BuffsI[spellID].customText
 				end
 				tempI[spellID] = data
 			end
@@ -567,18 +853,23 @@ function iCD:updateBuffs()
 					texture = icon,
 				}
 				if iCD.BuffsC[spellID].stack then
-					if type(iCD.BuffsC[spellID].stack) == 'string' then
+					if iCD.BuffsC[spellID].stackFunc then
+						data.stackFunc = iCD.BuffsC[spellID].stackFunc
+					elseif type(iCD.BuffsC[spellID].stack) == 'string' then
 						data.stack = iCD.BuffsC[spellID].stack
 					else
 						data.stack = count
 					end
+				end
+				if iCD.BuffsC[spellID].customText then
+					data.customText = iCD.BuffsC[spellID].customText
 				end
 				tempC[spellID] = data
 			end
 		end
 	end
 	for i = 1, 41 do -- Debuffs
-		local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitDebuff('target', i, 'player')
+		local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitDebuff('target', i, 'player')
 		if not name then
 			break
 		else
@@ -594,8 +885,11 @@ function iCD:updateBuffs()
 						data.stack = count
 					end
 				end
+				if iCD.debuffs[spellID].customText then
+					data.customText = iCD.debuffs[spellID].customText
+				end
 				temp[spellID] = data
-				
+
 			end
 			if iCD.DebuffsI[spellID] then
 				local data = {
@@ -608,6 +902,9 @@ function iCD:updateBuffs()
 					else
 						data.stack = count
 					end
+				end
+				if iCD.DebuffsI[spellID].customText then
+					data.customText = iCD.DebuffsI[spellID].customText
 				end
 				tempI[spellID] = data
 			end
@@ -622,6 +919,9 @@ function iCD:updateBuffs()
 					else
 						data.stack = count
 					end
+				end
+				if iCD.DebuffsC[spellID].customText then
+					data.customText = iCD.DebuffsC[spellID].customText
 				end
 				tempC[spellID] = data
 			end
@@ -683,7 +983,7 @@ function iCD:updateBuffs()
 		iCD.frames.buffsI[i].data = {}
 		iCD.frames.buffsI[i]:Hide()
 	end
-	
+
 	id = 1
 	for k,v in spairs(tempC, function(t,a,b) return t[b].endTime > t[a].endTime end) do
 		iCD:CreateNewFrame(id, 'buffsC')
@@ -739,10 +1039,10 @@ function iCD:updateBuffList()
 	local tempBuffs = {}
 	local tempDebuffs = {}
 
-	for k,v in pairs(iCD[iCD.class][iCD.specID].row5) do
+	for k,v in pairs(iCD.spellData.spec.row5) do
 		addIfEligible(k,v, tempBuffs, tempDebuffs)
-	end	
-	for k,v in pairs(iCD[iCD.class].all.row5) do
+	end
+	for k,v in pairs(iCD.spellData.all.row5) do
 		addIfEligible(k,v, tempBuffs, tempDebuffs)
 	end
 	for k,v in pairs(iCD.general.row5) do
@@ -753,10 +1053,10 @@ function iCD:updateBuffList()
 	-- buffsI
 	local tempDebuffsI = {}
 	local tempBuffsI = {}
-	for k,v in pairs(iCD[iCD.class][iCD.specID].buffsI) do
+	for k,v in pairs(iCD.spellData.spec.buffsI) do
 		addIfEligible(k,v, tempBuffsI, tempDebuffsI)
-	end	
-	for k,v in pairs(iCD[iCD.class].all.buffsI) do
+	end
+	for k,v in pairs(iCD.spellData.all.buffsI) do
 		addIfEligible(k,v, tempBuffsI, tempDebuffsI)
 	end
 	for k,v in pairs(iCD.general.buffsI) do
@@ -764,13 +1064,13 @@ function iCD:updateBuffList()
 	end
 	iCD.BuffsI = tempBuffsI
 	iCD.DebuffsI = tempDebuffsI
-	
+
 	local tempDebuffsC = {}
 	local tempBuffsC = {}
-	for k,v in pairs(iCD[iCD.class][iCD.specID].buffsC) do
+	for k,v in pairs(iCD.spellData.spec.buffsC) do
 		addIfEligible(k,v, tempBuffsC, tempDebuffsC)
-	end	
-	for k,v in pairs(iCD[iCD.class].all.buffsC) do
+	end
+	for k,v in pairs(iCD.spellData.all.buffsC) do
 		addIfEligible(k,v, tempBuffsC, tempDebuffsC)
 	end
 	for k,v in pairs(iCD.general.buffsC) do
@@ -778,14 +1078,14 @@ function iCD:updateBuffList()
 	end
 	iCD.BuffsC = tempBuffsC
 	iCD.DebuffsC = tempDebuffsC
-	
+
 	iCD:updateBuffs()
 end
 function iCD:UpdateSkills()
-	iCD.glowEffects = {}
-	iCD.glowSoundEffects = {}
+	iCD:resetGlows()
 	local temp = {row1 = {}, row2 = {}, row3 = {}}
 	local function add(k,v, row)
+		if v.level and v.level > iCD.level then return end
 		if not v.showFunc or (v.showFunc and v.showFunc()) then
 			temp[row][k] = v
 		end
@@ -793,15 +1093,16 @@ function iCD:UpdateSkills()
 	if not iCD.class or not iCD.specID then
 		return
 	end
-	iCD.gcd = iCD[iCD.class][iCD.specID].gcd
-	for row,t in pairs(iCD[iCD.class][iCD.specID]) do
+	--iCD.gcd = iCD[iCD.class][iCD.specID].gcd
+	iCD.gcd = 61304
+	for row,t in pairs(iCD.spellData.spec) do
 		if row == 'row1' or row == 'row2' or row == 'row3' then
 			for k,v in pairs(t) do
 				add(k,v,row)
 			end
 		end
 	end
-	for k,v in pairs(iCD[iCD.class].all) do
+	for k,v in pairs(iCD.spellData.all) do
 		if row == 'row1' or row == 'row2' or row == 'row3' then
 			for k,v in pairs(t) do
 				add(k,v,row)
@@ -815,7 +1116,7 @@ function iCD:UpdateSkills()
 			iCD:CreateNewFrame(id, row)
 			iCD.frames[row][id].data = {}
 			iCD.frames[row][id].data.usedBy = k
-			iCD.frames[row][id].data.spellName = GetSpellInfo(k)
+			iCD.frames[row][id].data.spellName = GetSpellInfo(k > 0 and k or -k)
 			if v.stackFunc then
 				iCD.frames[row][id].data.stackFunc = v.stackFunc
 			elseif v.stack then
@@ -824,11 +1125,17 @@ function iCD:UpdateSkills()
 			if v.customText then
 				iCD.frames[row][id].data.customText = v.customText
 			end
+			if v.AM then
+				iCD.frames[row][id].data.AM = v.AM
+			end
 			if v.range then
 				if v.customRange then
 					iCD.frames[row][id].data.customRange = v.customRange
 				else
 					iCD.frames[row][id].data.range = true
+				end
+				if v.customRangeSpell then
+					iCD.frames[row][id].data.customRangeSpell = v.customRangeSpell
 				end
 			end
 			if v.cost then
@@ -843,6 +1150,9 @@ function iCD:UpdateSkills()
 			end
 			if v.charges then
 				iCD.frames[row][id].data.charges = true
+			end
+			if v.showTimeAfterGCD then
+				iCD.frames[row][id].data.showTimeAfterGCD = true
 			end
 			if v.glow then
 				local glow = v.glow
@@ -872,7 +1182,7 @@ function iCD:UpdateSkills()
 			--Re center
 			iCD[row]:SetWidth(id*21-1)
 			iCD.frames[row][id]:Show()
-			id = id + 1			
+			id = id + 1
 		end
 		for i = id, #iCD.frames[row] do
 			iCD.frames[row][i].data = {}
@@ -882,23 +1192,41 @@ function iCD:UpdateSkills()
 end
 function iCD:updateEH()
 	local hp = UnitHealth('player')
+	local mhp = UnitHealthMax('player')
 	local a = UnitGetTotalAbsorbs('player')
 	local ha = UnitGetTotalHealAbsorbs('player')
+	local r = 1-hp/mhp
+	local g = hp/mhp
 	if ha > 0 then
-		iCD.EHtext:SetFormattedText('-%.0f\n%.0f', ha/1000,(hp+a)/1000)
+		iCD.EHtext:SetFormattedText('-%.0f\n\124cff%02x%02x%02x%.0f\124r\n%.0f', ha/1000,math.ceil(r * 255), math.ceil(g* 255), 0, (hp/mhp)*100, (hp+a)/1000)
 	else
-		iCD.EHtext:SetFormattedText('%.0f', (hp+a)/1000)
+		iCD.EHtext:SetFormattedText('\124cff%02x%02x%02x%.0f\124r\n%.0f', math.ceil(r * 255), math.ceil(g* 255), 0, (hp/mhp)*100, (hp+a)/1000)
 	end
 end
 function iCD:updateCombatLogStuff()
 end
-function iCD:addToRow4(spellID, isItem, dura)
-	iCD.extras[spellID] = {
-		item = isItem or nil,
-		customDuration = dura + GetTime()
-	}
+function iCD:addToRow4(spellID, isItem, dura, stackFunc)
+	if stackFunc then
+		iCD.extras[spellID] = {
+			item = isItem or nil,
+			customDuration = dura + GetTime(),
+			stack = stackFunc and true or false,
+			stackFunc = stackFunc and stackFunc or nil,
+		}
+	else
+		iCD.extras[spellID] = {
+			item = isItem or nil,
+			customDuration = dura + GetTime(),
+			stack = true,
+			stackFunc = stackFunc,
+		}
+	end
 end
+
 function iCD.onUpdate()
+	--Out of range checking
+	iCD:checkRange()
+	-- durations
 	for k,v in pairs(iCD.frames.row1) do
 		if v.data.usedBy then
 			iCD:updateFrame(k, 'row1')
@@ -934,7 +1262,7 @@ function iCD.onUpdate()
 			iCD:updateFrame(k, 'buffsC')
 		end
 	end
-	
+
 	--- dh stuff
 	local gS, gcdD = GetSpellCooldown(iCD.gcd)
 	local gCD = (gS+gcdD-GetTime())/gcdD
@@ -980,11 +1308,14 @@ addon:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE')
 addon:RegisterEvent('SPELL_UPDATE_COOLDOWN')
 addon:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED')
 addon:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
+addon:RegisterEvent('UNIT_AURA')
+addon:RegisterEvent('PLAYER_TARGET_CHANGED')
+addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_ABSORB_AMOUNT_CHANGED', 'player')
 addon:RegisterUnitEvent('UNIT_HEAL_ABSORB_AMOUNT_CHANGED', 'player')
-addon:RegisterUnitEvent('UNIT_AURA', 'player')
-addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', 'player')
+addon:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
+
 local function updateHealth()
 	local hp = UnitHealth('player')
 	local maxHP = UnitHealthMax('player')
@@ -1002,8 +1333,11 @@ local function updateHealth()
 	iCD.hpBar:SetValue(value)
 	local r = math.max(1-value+0.1, 0.1)
 	iCD.hpBar:SetStatusBarColor(r,0.1,0.1,1)
-	iCD.hpBar:SetBackdropBorderColor(1-value,0,0,1)
+	iCD.hpBar.bg:SetBackdropBorderColor(1-value,0,0,1)
 	iCD:updateEH()
+end
+function addon:PLAYER_TARGET_CHANGED()
+	iCD:checkRange(true)
 end
 function addon:UNIT_HEALTH()
 	updateHealth()
@@ -1013,6 +1347,7 @@ function addon:UNIT_HEALTH_FREQUENT()
 end
 function addon:UNIT_ABSORB_AMOUNT_CHANGED()
 	iCD:updateEH()
+	addon:UNIT_AURA('player')
 end
 function addon:UNIT_HEAL_ABSORB_AMOUNT_CHANGED()
 	iCD:updateEH()
@@ -1023,10 +1358,17 @@ end
 function addon:UNIT_POWER_FREQUENT()
 	iCD.powerText:SetText(iCD.powerFunc())
 end
+function addon:PLAYER_LEVEL_UP()
+	iCD.level = UnitLevel('player')
+	iCD:UpdateSkills()
+end
 function addon:PLAYER_LOGIN()
 	iCD.class = select(2,UnitClass('player'))
 	iCD.player = UnitGUID('player')
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
+	iCD.spellData = iCD[iCD.class](nil, iCD.specID)
+	iCD.level = UnitLevel('player')
+	--ICDTEST = iCD.spellData
 	iCD:UpdateSkills()
 	iCD:updateBuffList()
 	iCD:updateOnCD()
@@ -1035,18 +1377,21 @@ function addon:PLAYER_LOGIN()
 	if iCD.specID == 581 then
 		iCD.textTimers = {}
 	end
-	if iCD[iCD.class][iCD.specID].power then
-		if iCD[iCD.class][iCD.specID].power.pos then
-			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD[iCD.class][iCD.specID].power.pos.x, iCD[iCD.class][iCD.specID].power.pos.y)
+	if iCD.class == 'DRUID' then
+		addon:RegisterEvent('UPDATE_SHAPESHIFT_FORM')
+	end
+	if iCD.spellData.spec.power then
+		if iCD.spellData.spec.power.pos then
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD.spellData.spec.power.pos.x, iCD.spellData.spec.power.pos.y)
 		else
-			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -120, -150)
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -1080, -150)
 		end
-		iCD.powerFunc = iCD[iCD.class][iCD.specID].power.func
-		addon:RegisterUnitEvent('UNIT_POWER', 'player')
+		iCD.powerFunc = iCD.spellData.spec.power.func
+		--addon:RegisterUnitEvent('UNIT_POWER', 'player')
 		addon:RegisterUnitEvent('UNIT_POWER_FREQUENT', 'player')
 		iCD.powerText:SetText(iCD.powerFunc())
 	else
-		addon:UnregisterEvent('UNIT_POWER')
+		--addon:UnregisterEvent('UNIT_POWER')
 		addon:UnregisterEvent('UNIT_POWER_FREQUENT')
 		iCD.powerText:SetText('')
 		iCD.powerFunc = nil
@@ -1055,22 +1400,23 @@ end
 function addon:PLAYER_SPECIALIZATION_CHANGED()
 	iCD.class = select(2,UnitClass('player'))
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
+	iCD.spellData = iCD[iCD.class](nil, iCD.specID)
 	iCD:UpdateSkills()
 	iCD:updateBuffList()
 	iCD:updateCombatLogStuff()
 	iCD:updateOnCD()
-	if iCD.class and iCD.specID and iCD[iCD.class][iCD.specID].power then
-		if iCD[iCD.class][iCD.specID].power.pos then
-			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD[iCD.class][iCD.specID].power.pos.x, iCD[iCD.class][iCD.specID].power.pos.y)
+	if iCD.spellData.spec.power then
+		if iCD.spellData.spec.power.pos then
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD.spellData.spec.power.pos.x, iCD.spellData.spec.power.pos.y)
 		else
-			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -120, -150)
+			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -1080, -150)
 		end
-		iCD.powerFunc = iCD[iCD.class][iCD.specID].power.func
-		addon:RegisterUnitEvent('UNIT_POWER', 'player')
+		iCD.powerFunc = iCD.spellData.spec.power.func
+		--addon:RegisterUnitEvent('UNIT_POWER', 'player')
 		addon:RegisterUnitEvent('UNIT_POWER_FREQUENT', 'player')
 		iCD.powerText:SetText(iCD.powerFunc())
 	else
-		addon:UnregisterEvent('UNIT_POWER')
+		--addon:UnregisterEvent('UNIT_POWER')
 		addon:UnregisterEvent('UNIT_POWER_FREQUENT')
 		iCD.powerText:SetText('')
 		iCD.powerFunc = nil
@@ -1104,7 +1450,17 @@ function addon:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(spellID)
 		end
 	end
 end
-function addon:COMBAT_LOG_EVENT_UNFILTERED(timestamp,event,hideCaster,sourceGUID,sourceName,sourceFlags,sourceRaidFlags,destGUID,destName,destFlags,destRaidFlags,spellID, spellName,spellSchool, auraType, stacks)
+function addon:UNIT_SPELLCAST_SUCCEEDED(unitID, spellName,_,arg4,spellID)
+	if spellID == 126389 then -- Goblin Glider
+		iCD:addToRow4(spellID, false, 180)
+	elseif spellID == 55004 then -- Nitro Boost
+		iCD:addToRow4(spellID, false, 120)
+	elseif spellID == 67890 then -- Frag belt
+		iCD:addToRow4(spellID, false, 60)
+	end
+end
+function addon:COMBAT_LOG_EVENT_UNFILTERED()
+	local timestamp,event,hideCaster,sourceGUID,sourceName,sourceFlags,sourceRaidFlags,destGUID,destName,destFlags,destRaidFlags,spellID, spellName,spellSchool, auraType, stacks = CombatLogGetCurrentEventInfo()
 	if sourceGUID and sourceGUID == iCD.player then
 		--if event == 'SPELL_CAST_SUCCESS' then
 		--	if spellID and spellID == 204255 then
@@ -1112,16 +1468,30 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED(timestamp,event,hideCaster,sourceGUID
 		--	end
 		--end
 		if event == 'SPELL_AURA_APPLIED' then
-			if spellID then
-				if spellID == 208052 then
-					iCD:addToRow4(spellID, false, 30)
-				end
+			if spellID == 208052 then -- Sephuz, Prydaz
+				iCD:addToRow4(spellID, false, 30)
+			elseif spellID == 207472 then
+				iCD:addToRow4(spellID, false, 30, function() local v = select(5, iCD.UnitBuff('player', "Xavaric's Magnum Opus", nil, 'player')) if v then return v/1e3, '%.1f' else return '' end end)
+			end
+		elseif event == 'SPELL_AURA_REFRESH' then
+			if spellID == 207472 then -- Prydaz
+				iCD:addToRow4(spellID, false, 30, function() local v = select(5, iCD.UnitBuff('player', "Xavaric's Magnum Opus", nil, 'player')) if v then return v/1e3, '%.1f' else return '' end end)
 			end
 		elseif event == 'SPELL_CAST_SUCCESS' then
-			if spellID then
-				if spellID == 214584 then
-					iCD:addToRow4(spellID, false, 60)
-				end
+			if spellID == 214584 then
+				iCD:addToRow4(spellID, false, 60)
+			elseif spellID == 206931 then -- DK, Blooddrinker
+				iCD.customSpellTimers[spellID] = GetTime() + 30
+			elseif spellID == 43265 then -- DK, DnD
+				iCD.customSpellTimers[spellID] = GetTime() + (iCD.specID == 252 and 30 or 15)
+			elseif spellID == 55233 then -- Vampiric Blood
+				iCD.customSpellTimers[spellID] = 0
+			elseif spellID == 26573 then -- Paladin, Conce
+				iCD.customSpellTimers[spellID] = GetTime() + 12
+			end
+		elseif event == 'SPELL_PERIODIC_DAMAGE' then
+			if spellID == 55078 then
+				iCD.customSpellTimers[55233] = iCD.customSpellTimers[55233] + auraType
 			end
 		end
 	end
@@ -1131,12 +1501,83 @@ function addon:SPELL_UPDATE_COOLDOWN()
 	iCD:updateOnCD()
 end
 function addon:UNIT_AURA(unitID)
-	iCD:updateBuffs()
-	iCD:updateEH()
+	if unitID == 'player' or unitID == 'target' or unitID == 'pet' then
+		if iCD.powerFunc and unitID == 'player' then
+			addon:UNIT_POWER()
+		end
+		iCD:updateBuffs()
+		iCD:updateEH()
+	end
 end
 function addon:PLAYER_EQUIPMENT_CHANGED()
-	iCD:updateBuffList()
+	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
-
-
+function addon:UPDATE_SHAPESHIFT_FORM()
+	iCD:UpdateSkills()
+end
+function ICDTEST()
+	return iCD.onCD
+end
 iCD.row1:SetScript('OnUpdate', iCD.onUpdate)
+
+--[=[
+function IANTORUS()
+	local s = ''
+	local types = {
+		['Cloth'] = true,
+		['Leather'] = true,
+		['Mail'] = true,
+		['Plate'] = true,
+		['Neck'] = true,
+		['Finger'] = true,
+		['Back'] = true,
+	}
+	for i = 1, EJ_GetNumLoot() do
+		local itemID, encounterID, name, icon,slot, itemType, itemLink = EJ_GetLootInfoByIndex(i)
+		if slot:find('Relic') then
+			slot = slot:match('%a+')
+		end
+		local eN = EJ_GetEncounterInfo(encounterID)
+		s = s..itemType..'\t'..slot..'\t'..name..'\t'..itemID..'\t'..eN..'\t'
+		if types[itemType] or types[slot] then
+			local stats = GetItemStats(itemLink)
+			local tempT = {}
+			total = 0
+			if stats['ITEM_MOD_MASTERY_RATING_SHORT'] then
+				tempT['M'] = stats['ITEM_MOD_MASTERY_RATING_SHORT']
+				total = total + stats['ITEM_MOD_MASTERY_RATING_SHORT']
+			end
+			if stats['ITEM_MOD_HASTE_RATING_SHORT'] then
+				tempT['H'] = stats['ITEM_MOD_HASTE_RATING_SHORT']
+				total = total + tempT['H']
+			end
+			if stats['ITEM_MOD_CRIT_RATING_SHORT'] then
+				tempT['C'] = stats['ITEM_MOD_CRIT_RATING_SHORT']
+				total = total + tempT['C']
+			end
+			if stats['ITEM_MOD_VERSATILITY'] then
+				tempT['V'] = stats['ITEM_MOD_VERSATILITY']
+				total = total + tempT['V']
+			end
+			local stat
+			for k,v in spairs(tempT,function(t,a,b) return t[b] < t[a] end) do
+				local p = v/total*100
+				if not stat then
+					stat = string.format('%s%.0f',k,p)
+				else
+					stat = stat ..'/'..string.format('%s%.0f',k,p)
+				end
+			end
+			s = s..stat..'\r'
+		else
+			s = s..'\r'
+		end
+	end
+	iEETCopyFrame:SetText(s)
+	iEETCopyFrame:Show()
+
+end
+--]=]
+--/script local t = GetItemStats(select(7,EJ_GetLootInfoByIndex(60))); for k,v in pairs(t) do print(k,v) end
+--/script local s = 'Fire Artifact Relic';if s:find('Relic') then local t=s:match('%a+') print(t) else print('f') end
+--=JOIN(",",FILTER('['&D3:L25&']='&L3:L25, NOT(ISBLANK(L3:L25))))
