@@ -42,17 +42,28 @@ function iCD:HUNTER(specID)
 		-- Row 1
 		t.row1 = {
 			[34026] = { -- Kill Command
-				order = 1,
+				order = 5,
 				range = true,
 				cost = true,
+				showTimeAfterGCD = true,
 			},
 			[217200] = { -- Barbed Shot
 				order = -1,
 				range = true,
 				cost = true,
+				charges = true,
 				stack = true,
 				glow = true,
 				glowSound = true,
+				showTimeAfterGCD = true,
+			},
+			[53209] = { -- Chimaera Shot
+				order = 3,
+				range = true,
+				showTimeAfterGCD = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(2, 3, 1))
+				end,
 			},
 			[120679] = { -- Dire Beast
 				order = 4,
@@ -63,16 +74,16 @@ function iCD:HUNTER(specID)
 					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 			},
-		}
-		t.row2 = {
 			[131894] = { -- A Murder of Crows
-				order = 2,
+				order = 6,
 				range = true,
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 3, 1))
 				end,
 				cost = true,
 			},
+		}
+		t.row2 = {
 			[193530] = { -- Aspect of the Wild
 				order = 4,
 			},
@@ -107,10 +118,23 @@ function iCD:HUNTER(specID)
 			[34477] = {}, -- Misdirection
 			[187650] = {}, -- Freezing Trap
 			[187698] = {}, -- Tar Trap
+			[264265] = {}, -- Spirit Shock (pet)
+			[90361] = {}, -- Spirit Mend (pet)
+			[19577] = {}, -- Intimidation
+			[136] = {}, -- Mend Pet
+			[209997] = {}, -- Play Dead
 		}
 		t.buffsI = {
+			[272790] = { -- Barbed Shot
+				stack = true,
+				pet = true,
+			},
+			[268877] = {}, -- Beast Cleave
 		}
 		t.buffsC = {
+			[186265] = {}, -- Turtle
+			[19574] = {}, -- Bestial Wrath
+			[193530] = {}, -- Aspect of the wild
 		}
 	elseif specID == 254 then --Markmanship
 		iCD.outOfRangeSpells = {

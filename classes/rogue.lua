@@ -193,6 +193,7 @@ function iCD:ROGUE(specID)
 			[1856] = {}, -- Vanish
 			[199804] = {}, -- Between the Eyes
 			[195457] = {}, -- Grappling Hook
+			[57934] = {}, -- Tricks of the trade
 		}
 		t.buffsI = {
 			[13877] = {}, -- Blade Flurry
@@ -221,6 +222,11 @@ function iCD:ROGUE(specID)
 			[13750] = {}, -- Adrenaline Rush
 			[199754] = {}, -- Riposte
 			[2983] = {}, -- Sprint
+				[275863] = { -- Snake Eyes
+				stack = true,
+				azerite = 239,
+			},
+			[31224] = {} -- Cloak of Shadows
 		}
 	elseif specID == 261 then --Sublety
 		iCD.outOfRangeSpells = {

@@ -49,18 +49,10 @@ function iCD:DRUID(specID)
 		}
 		t.row1 = {
 			-- Cat form
-			[202767] = { -- New Moon
-				order = 3,
-				charges = true,
-				stack = true,
-				range = true,
-				level = 110,
-			},
 		}
 		t.row2 = {
 			[194223] = { -- Celestial Alignment
 				order = 5,
-				ignoreGCD = true,
 				level = 48,
 			},
 			[22812] = { -- Barkskin
@@ -68,30 +60,20 @@ function iCD:DRUID(specID)
 				ignoreGCD = true,
 				level = 26,
 			},
-			[202360] = { -- Blessing of the Ancients
-				order = 15,
-				stack = true,
-				stackFunc = function()
-					if UnitBuff('player', "Blessing of An'she") then
-						return '+R'
-					elseif UnitBuff('player', 'Blessing of Elune') then
-						return '+AP'
-					else
-						return '-'
-					end
-				end,
+			[205636] = { -- Force of Nature
+			order = 7,
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 3, 1))
+					return select(4, GetTalentInfo(1, 3, 1))
 				end,
-			}
+			},
 		}
 		t.row3 = {
 			[190984] = { -- Solar Wrath
 				order = 3,
 				range = true,
 				customText = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Solar Empowerment', nil, 'player')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Solar Empowerment')
+					if count then
 						return count
 					else
 						return ' '
@@ -99,8 +81,8 @@ function iCD:DRUID(specID)
 				end,
 				stack = true,
 				stackFunc = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player','Solar Empowerment', nil, 'player')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Solar Empowerment')
+					if count then
 						local dura = expirationTime - GetTime()
 						if dura > 5 then
 							return string.format('%.0f', dura)
@@ -117,8 +99,8 @@ function iCD:DRUID(specID)
 				cost = true,
 				range = true,
 				customText = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Lunar Empowerment', nil, 'player')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Lunar Empowerment')
+					if count then
 						return count
 					else
 						return ' '
@@ -126,8 +108,8 @@ function iCD:DRUID(specID)
 				end,
 				stack = true,
 				stackFunc = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Lunar Empowerment', nil, 'player')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Lunar Empowerment')
+					if count then
 						local dura = expirationTime - GetTime()
 						if dura > 5 then
 							return string.format('%.0f', dura)
@@ -141,6 +123,18 @@ function iCD:DRUID(specID)
 			},
 		}
 		t.row4 = {
+			[18562] = { -- Swiftmend
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
+			[48438] = { -- Wild Growth
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
 			[1850] = {}, -- Dash
 			[5215] = {}, -- Prowl
 			[5211] = { -- Mighty Bash
@@ -151,6 +145,11 @@ function iCD:DRUID(specID)
 			[132469] = { -- Typhoon
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 3, 1))
+				end,
+			},
+			[102359] = { -- Mass Entanglement
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 2, 1))
 				end,
 			},
 			[2782] = {}, --Remove Corruption
@@ -199,10 +198,6 @@ function iCD:DRUID(specID)
 				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0))*100
 			end,
 		}
-
-
-
-
 		t.row1 = {
 			-- Cat form
 			[5217] = { -- Tiger's Fury
@@ -236,7 +231,6 @@ function iCD:DRUID(specID)
 		t.row2 = {
 			[106951] = { -- Berserk
 				order = 5,
-				ignoreGCD = true,
 			},
 			[61336] = { -- Survival Instincts
 				order = 10,
@@ -324,6 +318,14 @@ function iCD:DRUID(specID)
 			},
 		}
 		t.buffsI = {
+			[69369] = {}, -- Predatory Swiftness
+			[145152] = { -- Bloodtalons
+				stack = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 2, 1))
+				end,
+			},
+			[5217] = {}, -- Tiger's Fury
 		}
 	elseif specID == 104 then -- Guardian
 		iCD.outOfRangeSpells = {
@@ -390,7 +392,12 @@ function iCD:DRUID(specID)
 				stackFunc = function()
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('Thrash')
 					if expirationTime then
-						return count > 0 and count or ''
+						local dura = expirationTime - GetTime()
+						if dura < 5 then
+							return count, '|cffff1a1a%.1f'
+						else
+							return count
+						end
 					else
 						return ''
 					end
@@ -559,7 +566,9 @@ function iCD:DRUID(specID)
 			},
 			[102558] = { -- Incarnation
 				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
+					local talent = select(4, GetTalentInfo(5, 3, 1))
+					local essence = iCD:Essences(22, true)
+					return (talent or essence) and true or false
 				end,
 			},
 			[155835] = { -- Bristling Fur
@@ -583,7 +592,10 @@ function iCD:DRUID(specID)
 			},
 		}
 		t.buffsC = {
-
+			[279541] = { -- Guardian's Wrath
+				stack = true,
+				azerite = 361,
+			},
 		}
 	elseif specID == 105 then -- Restoration
 		--gcd = 8921, -- Moonfire
@@ -613,14 +625,16 @@ function iCD:DRUID(specID)
 				order = 1,
 				range = true,
 				cost = true,
-				charges = true,
-				stack = true,
+				charges = select(4, GetTalentInfo(1, 2, 1)),
+				stack = select(4, GetTalentInfo(1, 2, 1)),
+				showTimeAfterCast = true,
 			},
 			[48438] = { -- Wild Growth
 				order = 3,
 				range = true,
 				cost = true,
 				level = 40,
+				showTimeAfterCast = true,
 			},
 			[197626] = { -- Starsurge
 				order = 20,
@@ -704,7 +718,19 @@ function iCD:DRUID(specID)
 				showFunc = function()
 					return select(4, GetTalentInfo(5, 3, 1))
 				end,
-			}
+			},
+			[164815] = { -- Sunfire
+				debuff = true,
+			},
+			[164812] = { -- Moonfire
+				debuff = true,
+			},
+			[155722] = { -- Rake
+				debuff = true,
+			},
+			[1079] = { -- Rip
+				debuff = true,
+			},
 		}
 	end
 	return temp

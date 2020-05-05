@@ -29,101 +29,114 @@ function iCD:SHAMAN(specID)
 				y = -8
 			},
 			func = function()
-				return UnitPower("player", 11)
+				local ES = select(2, IsUsableSpell('Earth Shock'))
+				return (not ES and '|cff00ff00' or '') .. UnitPower('player', 11)
 			end
 		}
 		t.row1 = {
+			[188389] = { -- Flame Shock
+				order = 1,
+				range = true,
+				showTimeAfterGCD = true,
+			},
 			[51505] = {
 				-- Lava Burst
 				order = 3,
 				range = true,
-				stack = select(4, GetTalentInfo(6, 3, 1)),
-				charges = select(4, GetTalentInfo(6, 3, 1)),
+				stack = select(4, GetTalentInfo(1, 2, 1)),
+				charges = select(4, GetTalentInfo(1, 2, 1)),
 				glow = true,
-				glowSound = true
+				glowSound = true,
+				showTimeAfterGCD = true,
 			},
 			[117014] = {
 				-- Elemental Blast
 				order = 5,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
+					return select(4, GetTalentInfo(1, 3, 1))
 				end
-			}
-		}
-		t.row2 = {
-			[205495] = {
-				-- Stormkeeper (artifact)
-				order = 2
 			},
 			[192222] = {
 				-- Liquid Magma Totem
 				order = 3,
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 1, 1))
+					return select(4, GetTalentInfo(4, 3, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
+		}
+		t.row2 = {
+			[191634] = { -- Stormkeeper
+				order = 2,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 2, 1))
 				end
 			},
-			[114050] = {
-				-- Ascendance
+			[114050] = { -- Ascendance
 				order = 4,
-				ignoreGCD = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 1, 1))
+					return select(4, GetTalentInfo(7, 3, 1))
 				end
 			},
 			[198067] = {
 				-- Fire Elemental
 				order = 5
 			},
+			[108281] = { -- Ancestral Guidance
+				order = 7,
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 2, 1))
+				end
+			},
 			[108271] = {
 				-- Astral Shift
-				order = 7,
+				order = 10,
 				ignoreGCD = true
 			},
 			[198103] = {
 				-- Earth Elemental
-				order = 11
+				order = 6
 			}
 		}
 		t.row4 = {
 			[51886] = {}, -- Cleanse Spirit
 			[2484] = {}, -- Earthbind Totem
-			[192063] = {
-				-- Gust of Wind
-				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
-				end
-			},
 			[51514] = {}, -- Hex
-			[192058] = {
-				-- Lightning Surge Totem
-				showFunc = function()
-					return select(4, GetTalentInfo(3, 1, 1))
-				end
-			},
-			[51490] = {} -- Thunderstorm
+			[192058] = {}, -- Lightning Surge Totem
+			[51490] = {}, -- Thunderstorm
+			[8143] = {}, -- Tremor Totem
+
 		}
 		t.buffsC = {
-			[114050] = {
-				-- Ascendance
+			[114050] = { -- Ascendance
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 1, 1))
+					return select(4, GetTalentInfo(7, 3, 1))
 				end
 			},
 			[16246] = {
 				-- Elemental Focus
 				stack = true
 			},
-			[205495] = {
+			[191634] = {
 				-- Stormkeeper
-				stack = true
-			}
+				stack = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 2, 1))
+				end
+			},
+			[273453] = { -- Lava Shock, Azerite trait
+				stack = true,
+				azerite = 178,
+			},
 		}
 		t.buffsI = {
-			[188389] = {
-				-- Flame Shock
+			[188389] = { -- Flame Shock
 				debuff = true
-			}
+			},
+			[286976] = { -- Tectonic Thunder, Azerite trait, instant chain lightning
+				azerite = 417,
+			},
 		}
 	elseif specID == 263 then -- Enhancement
 		iCD.outOfRangeSpells = {
@@ -269,54 +282,59 @@ function iCD:SHAMAN(specID)
 				-- Lava Burst
 				order = 3,
 				range = true,
-				stack = select(4, GetTalentInfo(6, 3, 1)),
-				charges = select(4, GetTalentInfo(6, 3, 1)),
+				cost = true,
+				stack = select(4, GetTalentInfo(2, 1, 1)),
+				charges = select(4, GetTalentInfo(2, 1, 1)),
 				glow = true,
 				glowSound = true
 			},
 				[188838] = { -- Flame Shock
 				order = 4,
-				range = true
+				range = true,
+				cost = true,
 			},
-
 			[61295] = {
 				-- Riptide
 				order = 2,
 				range = true,
-				charges = select(4, GetTalentInfo(6, 3, 1)),
-				stack = select(4, GetTalentInfo(6, 3, 1)),
+				cost = true,
+				charges = select(4, GetTalentInfo(2, 1, 1)),
+				stack = select(4, GetTalentInfo(2, 1, 1)),
 			},
 			[73920] = { -- Healing Rain
 				order = 6,
+				cost = true,
 				range = true
 			},
 			[5394] = {
 				-- Healing Stream Totem
 				order = 7,
 				range = true,
-				charges =  select(4, GetTalentInfo(6, 3, 1)),
-				stack = select(4, GetTalentInfo(6, 3, 1)),
-			}
+				charges =  select(4, GetTalentInfo(2, 1, 1)),
+				stack = select(4, GetTalentInfo(2, 1, 1)),
+				showFunc = function()
+					return not select(4, GetTalentInfo(6, 3, 1))
+				end
+			},
+			[198838] = { -- Earthen Wall Totem
+				order = 8,
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 2, 1))
+				end
+			},
 		}
 		t.row2 = {
-			[207778] = {
-				-- Gift of the Queen (artifact)
-				order = 2
-			},
 			[79206] = {
 				-- Spiritwalker's grace
-				order = 3
+				order = 2
 			},
+
 			[108280] = {
 				-- Healing tide totem
-				order = 3
+				order = 4
 			},
 			[98008] = {
 				-- Spirit Link Totem
-				order = 5
-			},
-			[157153] = {
-				-- Cloudburst Totem
 				order = 5
 			},
 			[108271] = {
@@ -326,21 +344,16 @@ function iCD:SHAMAN(specID)
 			}
 		}
 		t.row4 = {
-			[51886] = {}, -- Cleanse Spirit
+			[77130] = {}, -- Cleanse Spirit
 			[2484] = {}, -- Earthbind Totem
-			[192063] = {
-				-- Gust of Wind
-				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
-				end
-			},
 			[51514] = {}, -- Hex
-			[192058] = {
-				-- Lightning Surge Totem
-				showFunc = function()
-					return select(4, GetTalentInfo(3, 1, 1))
-				end
-			}
+			[192058] = {}, -- Capacitor Totem
+			[192077] = { -- Wind Rush Totem
+			showFunc = function()
+				return select(4, GetTalentInfo(5, 3, 1))
+			end
+			},
+			[8143] = {}, -- Tremor Totem
 		}
 		t.buffsC = {
 			[114050] = {
@@ -356,12 +369,20 @@ function iCD:SHAMAN(specID)
 			[205495] = {
 				-- Stormkeeper
 				stack = true
-			}
+			},
+			[79206] = {}, -- Spirit Walker's Grace
+
 		}
 		t.buffsI = {
+			[288675] = { -- High Tide
+				stack = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 1, 1))
+				end
+			},
 			[157504] = {  -- Cloudburst Totem
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 2, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end
 			},
 			[188838] = {

@@ -60,6 +60,34 @@ function iCD:WARRIOR(specID)
 			end,
 		}
 		t.row1 = {
+			[281000] = { -- Execute
+				order = 1,
+				glow = true,
+				range = true,
+				glowSound = "text1",
+				cost = true,
+				customCost = function()
+					local isUsable = IsUsableSpell("Execute")
+					if not isUsable then
+						return true
+					end
+				end,
+				stack = true,
+				stackFunc = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Sudden Death')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura,'%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
+				showTimeAfterGCD = true,
+			},
 			[167105] = { -- Colossus Smash
 				order = 3,
 				range = true,
@@ -68,8 +96,8 @@ function iCD:WARRIOR(specID)
 				showTimeAfterGCD = true,
 				stack = true,
 				stackFunc = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitDebuff('target', 'Colossus Smash', nil, 'player')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('Colossus Smash')
+					if expirationTime then
 						local dura = expirationTime - GetTime()
 						if dura > 5 then
 							--return string.format('%.0f', dura)
@@ -81,76 +109,114 @@ function iCD:WARRIOR(specID)
 						return ''
 					end
 				end,
+				showFunc = function()
+					return not select(4, GetTalentInfo(5, 2, 1))
+				end,
+			},
+			[262161] = { -- Warbreaker
+				order = 3,
+				range = true,
+				glow = true,
+				glowSound = true,
+				showTimeAfterGCD = true,
+				stack = true,
+				stackFunc = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('Colossus Smash')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							--return string.format('%.0f', dura)
+							return dura, '%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 2, 1))
+				end,
 			},
 			[12294] = { -- Mortal Strike
 				order = 5,
 				range = true,
 				showTimeAfterGCD = true,
 				cost = true,
-				stack = select(4, GetTalentInfo(5, 2, 1)),
-				charges = select(4, GetTalentInfo(5, 2, 1)),
 				glow = true,
 				glowSound = 'text2',
 			},
-			[152277] = { -- Ravager
+			[7384] = { -- Overpower
+				order = 6,
+				range = true,
+				showTimeAfterGCD = true,
+				glow = true,
+				glowSound = true,
+			},
+			[260643] = { -- Skullsplitter
 				order = 7,
 				showTimeAfterGCD = true,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
+				end,
 			},
-			[209577] = { -- Warbreaker (artifact)
-				order = 8,
+			[152277] = { -- Ravager
+				order = 9,
 				showTimeAfterGCD = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 3, 1))
+				end,
 			},
 			[845] = { -- Cleave
-				order = 10,
+				order = 8,
 				range = true,
 				showTimeAfterGCD = true,
 				cost = true,
-			},
-			[46968] = { -- Shockwave
-				order = 8,
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
+					return select(4, GetTalentInfo(5, 3, 1))
 				end,
-				showTimeAfterGCD = true,
 			},
 			[107570] = { -- Stormbolt
-				order = 8,
+				order = 9,
 				row = 1,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 2, 1))
+					return select(4, GetTalentInfo(2, 3, 1))
 				end,
 				showTimeAfterGCD = true,
 			},
 		}
 		t.row2 = {
-			[1719] = { -- Battle Cry
+			[227847] = { -- Bladestorm
 				order = 3,
-				ignoreGCD = true,
+				showTimeAfterGCD = true,
 			},
 			[97462] = { -- Commanding Shout
 				order = 12,
-				ignoreGCD = true,
 			},
-			[184364] = { -- Enraged Regeneration
+			[118038] = { -- Die by the Sword
 				order = 11,
 				ignoreGCD = true,
 			},
 			[107574] = { -- Avatar
-				order = 10,
+				order = 4,
 				row = 2,
 				showFunc = function()
-					return select(4, GetTalentInfo(3, 3, 1))
+					return select(4, GetTalentInfo(6, 2, 1))
 				end,
+			},
+			[260708] = { -- Sweeping Strikes
+				order = 5,
+				row = 2,
 			},
 		}
 		t.row3 = {
 		}
 		t.row4 = {
 			[18499] = {}, -- Berserker Rage
-			--[198304] = {}, -- Intercept
 			[355] = {}, -- Taunt
-			[100] = { -- charge
+			[100] = { -- Charge
 				stack = true,
 				charges = true,
 			},
@@ -170,13 +236,30 @@ function iCD:WARRIOR(specID)
 			[206333] = { -- Taste for Blood
 				stack = true,
 			},
+			[275540] = { -- Test of Might
+				azerite = 226,
+			},
+			[208086] = { -- Colossus Smash
+				debuff = true,
+			},
 			[184362] = {}, -- Enrage
+			[772] = { -- Rend
+				debuff = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+			},
+			[260708] = {}, -- Sweeping Strikes
+			[7384] = { -- Overpower
+				stack = true,
+			},
+			[32216] = {}, -- Victory Rush
+			[278826] = {}, -- Crushing Assault
 		}
 		t.buffsC = {
-			[1719] = {}, -- Battly Cry
 			[107574] = {}, -- Avatar
 			[18499] = {}, -- Berserker Rage
-			[184364] = {}, -- Enraged Regeneration
+			[197690] = {}, -- Defensive Stance
 		}
 	elseif specID == 72 then --Fury
 		iCD.outOfRangeSpells = {
@@ -205,6 +288,27 @@ function iCD:WARRIOR(specID)
 				range = true,
 				glowSound = true,
 				cost = true,
+				customCost = function()
+					local isUsable = IsUsableSpell("Execute")
+					if not isUsable then
+						return true
+					end
+				end,
+				stack = true,
+				stackFunc = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Sudden Death')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura,'%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
+				showTimeAfterGCD = true,
 			},
 			[184367] = { -- Rampage
 				order = 2,
@@ -219,10 +323,18 @@ function iCD:WARRIOR(specID)
 				showTimeAfterGCD = true,
 			},
 			[85288] = { -- Raging Blow
-				order = 5,
+				order = 4,
 				range = true,
 				charges = true,
 				stack = true,
+				showTimeAfterGCD = true,
+			},
+			[280772] = { -- Siegebreaker
+				order = 5,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 3, 1))
+				end,
 				showTimeAfterGCD = true,
 			},
 			[118000] = { -- Dragon Roar
@@ -255,7 +367,6 @@ function iCD:WARRIOR(specID)
 			},
 			[97462] = { -- Commanding Shout
 				order = 12,
-				ignoreGCD = true,
 			},
 			[184364] = { -- Enraged Regeneration
 				order = 11,
@@ -266,12 +377,16 @@ function iCD:WARRIOR(specID)
 		}
 		t.row4 = {
 			[18499] = {}, -- Berserker Rage
-			[355] = {}, -- Taunt
+			[355] = { -- Taunt
+				ignoreGCD = true,
+			},
 			[100] = { -- charge
-				stack = true,
-				charges = true,
+				stack = select(4, GetTalentInfo(2, 1, 1)),
+				charges = select(4, GetTalentInfo(2, 1, 1)),
 			},
 			[6544] = {}, -- Heroic Leap
+			[57755] = {}, -- Heroic Throw
+			[5246] = {}, -- Intimidating Shout
 		}
 		t.row5 = {
 		}
@@ -280,11 +395,13 @@ function iCD:WARRIOR(specID)
 				stack = true,
 			},
 			[184362] = {}, -- Enrage
+			[32216] = {}, -- Victory Rush
 		}
 		t.buffsC = {
 			[1719] = {}, -- Battly Cry
 			[18499] = {}, -- Berserker Rage
 			[184364] = {}, -- Enraged Regeneration
+			[213858] = {}, -- Battle Trance (pvp)
 		}
 	elseif specID == 73 then --Protection
 		--gcd = 20243, -- Devastate
@@ -334,10 +451,14 @@ function iCD:WARRIOR(specID)
 				glowSound = 'text1',
 				stack = true,
 				stackFunc = function()
-					if iCD.UnitBuff('player', 'Vengeance: Revenge') then
-						return iCD.colors.green .. '+'
-					elseif iCD.UnitBuff('player', 'Vengeance: Ignore Pain') then
-						return iCD.colors.red .. '_'
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Revenge!')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura,'%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
 					else
 						return ''
 					end
@@ -351,7 +472,6 @@ function iCD:WARRIOR(specID)
 				stack = true,
 				stackFunc = function()
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Avatar')
-
 					local start, cd = GetSpellCooldown(6343)
 					if expirationTime and (start+cd) < expirationTime+.1 then
 						return iCD.colors.green .. '+'
@@ -412,10 +532,10 @@ function iCD:WARRIOR(specID)
 				order = 10,
 			},
 			[5246] = {  -- Intimidating Shout
-				order = 11,
+				order = 13,
 			},
 			[97462] = { -- Rallying Cry
-				order = 12,
+				order = 15,
 			},
 		}
 		t.row3 = {
@@ -426,8 +546,10 @@ function iCD:WARRIOR(specID)
 				ignoreGCD = true,
 				cost = true,
 				AM = function()
+					local _, _, ls = iCD.UnitBuff('player', "Last Stand", nil, 'player')
+					if ls then return true end
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Shield Block')
-					if name then
+					if expirationTime then
 						local dura = expirationTime - GetTime()
 						if dura + 6 > 18 then
 							return true

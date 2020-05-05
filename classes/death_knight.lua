@@ -159,7 +159,10 @@ function iCD:DEATHKNIGHT(specID)
 		t.row4 = {
 			[221562] = {}, -- Asphyxiate
 			[56222] = {}, -- Dark Command
-			[49576] = {}, -- Death Grip
+			[49576] = { -- Death Grip
+				stack = function() return iCD:Essences(32, true) end,
+				charges = function() return iCD:Essences(32, true) end
+			},
 			[108199] = {}, -- Gorefiend's Grasp
 			[212552] = {}, -- Wraith Walk
 			[48265] = {}, -- Death's Advance
@@ -279,14 +282,15 @@ function iCD:DEATHKNIGHT(specID)
 		}
 		t.row1 = {
 			[49184] = { -- Howling Blast
-				order = 2,
+				order = 10,
 				range = true,
 				cost = true,
 				showTimeAfterGCD = true,
 				stack = true,
 				stackFunc = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Rime')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Rime')
+					--local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Rime')
+					if expirationTime then
 						local dura = expirationTime - GetTime()
 						if dura > 5 then
 							return dura,'%.0f'
@@ -301,14 +305,15 @@ function iCD:DEATHKNIGHT(specID)
 				glowSound = 'text1',
 			},
 			[49020] = { -- Obliterate
-				order = 3,
+				order = 5,
 				range = true,
 				cost = true,
 				showTimeAfterGCD = true,
 				stack = true,
 				stackFunc = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Killing Machine')
-					if name then
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Killing Machine')
+					--local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Killing Machine')
+					if expirationTime then
 						local dura = expirationTime - GetTime()
 						if dura > 5 then
 							return dura,'%.0f'
@@ -322,34 +327,44 @@ function iCD:DEATHKNIGHT(specID)
 				glow = true,
 				glowSound = true,
 			},
-			[196770] = { -- Remorless Winter
-				order = 5,
+			[196770] = { -- Remorseless Winter
+				order = 3,
 				cost = true,
+				stack = true,
+				stackFunc = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Remorseless Winter')
+					--local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Killing Machine')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura,'%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
 			},
 		}
 		t.row2 = {
 			[51271] = { -- Pillar of Frost
 				order = 3,
-				ignoreGCD = true,
 			},
 			[47568] = { -- Empowered Rune Weapon
 				order = 6,
-				ignoreGCD = true,
 			},
 			[207256] = { -- Obliteration
-				order = 4,
-				showFunc = function()
-					return select(4, GetTalentInfo(7, 1, 1))
-				end,
-			},
-			[152279] = { -- Breath of Sindragosa
 				order = 4,
 				showFunc = function()
 					return select(4, GetTalentInfo(7, 2, 1))
 				end,
 			},
-			[190778] = { -- Sindragosa's Fury
-				order = 5,
+			[152279] = { -- Breath of Sindragosa
+				order = 4,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 3, 1))
+				end,
 			},
 			[48707] = { -- Anti-Magic Shell
 				order = 7,
@@ -362,20 +377,23 @@ function iCD:DEATHKNIGHT(specID)
 			[221562] = {}, -- Asphyxiate
 			[56222] = {}, -- Dark Command
 			[49576] = {}, -- Death Grip
-			[108199] = {}, -- Gorefiend's Grasp
 			[212552] = {}, -- Wraith Walk
+			[48265] = {}, -- Death's Advance
 
 		}
 		t.row5 = {
 			[48707] = {}, -- Anti-Magic Shell
 			[212552] = {}, -- Wraith Walk
-			[55233] = {}, -- Vampiric Blood
 			[81256] = {}, -- Dancing Rune Weapon
 			[48792] = {}, -- Icebound Fortitude
 		}
 		t.buffsI = {
 			[51271] = {}, -- Pillar of Frost
 			[207256] = {}, -- Obliteration
+			[281209] = { -- Cold Heart
+				stack = true,
+			},
+			[152279] = {}, -- Breath of Sindragosa
 		}
 		t.buffsC = {
 
@@ -404,8 +422,15 @@ function iCD:DEATHKNIGHT(specID)
 					glow = true,
 					glowSound = true,
 				},
-				[43265] = { -- Death and Decay
+				[130736] = { -- Soul Reaper
+					range = true,
 					order = 2,
+					showFunc = function()
+						return select(4, GetTalentInfo(4, 3, 1))
+					end,
+				},
+				[43265] = { -- Death and Decay
+					order = 3,
 					glow = true,
 					row = 1,
 					glow = 43265,
@@ -425,7 +450,7 @@ function iCD:DEATHKNIGHT(specID)
 						end
 					end,
 					showFunc = function()
-						return not select(4, GetTalentInfo(7, 2, 1))
+						return not select(4, GetTalentInfo(6, 2, 1))
 					end,
 					customText = function()
 						if iCD.customSpellTimers[43265] then
@@ -449,7 +474,7 @@ function iCD:DEATHKNIGHT(specID)
 				},
 				[63560] = { -- Dark Transformation
 					range = true,
-					order = 3,
+					order = 4,
 				},
 
 				[275699] = { --Apocalypse
@@ -458,6 +483,12 @@ function iCD:DEATHKNIGHT(specID)
 				},
 			}
 			t.row2 = {
+				[207289] = { -- Unholy Frenzy
+					order = 3,
+					showFunc = function()
+						return select(4, GetTalentInfo(7, 2, 1))
+					end,
+				},
 				[42650] = { -- Army of the Dead
 					order = 4,
 					cost = true,
@@ -479,12 +510,23 @@ function iCD:DEATHKNIGHT(specID)
 						return select(4, GetTalentInfo(5, 2, 1))
 					end,
 				},
+				[46584] = {}, -- Raise Dead
+				[108194] = {  -- Asphyxiate
+					showFunc = function()
+						return select(4, GetTalentInfo(3, 3, 1))
+					end,
+				},
 				[56222] = { -- Dark Command
 					ignoreGCD = true,
 				},
 				[46584] = {}, -- Raise Dead
 				[48265] = {}, -- Death Advance
 				[49576] = {}, -- Death Grip
+				[47481] = {}, -- Gnaw (pet)
+				[47482] = {}, -- Leap (pet)
+			}
+			t.row5 = {
+				[48707] = {}, -- Anti-Magic Shell
 			}
 			t.buffsC = {
 				[274373] = { -- Festermight (trait)
@@ -501,7 +543,15 @@ function iCD:DEATHKNIGHT(specID)
 				},
 				[196782] = { -- Outbreak
 					debuff = true,
-				}
+				},
+				[207289] = { -- Unholy Frenzy
+					showFunc = function()
+						return select(4, GetTalentInfo(7, 2, 1))
+					end,
+				},
+				[63560] = { -- Dark Transformation
+					pet = true,
+				},
 			}
 
 	end

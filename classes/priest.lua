@@ -37,6 +37,30 @@ function iCD:PRIEST(specID)
 				order = 3,
 				cost = true,
 				range = true,
+				showTimeAfterCast = true,
+			},
+			[129250] = { -- Power Word: Solace
+				order = 1,
+				range = true,
+				showTimeAfterCast = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+			},
+			[214621] = { -- Schism
+				order = 6,
+				range = true,
+				cost = true,
+				showTimeAfterCast = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
+				end,
+			},
+			[194509] = { -- Power Word: Radiance
+				order = 7,
+				cost = true,
+				charges = true,
+				stack = true,
 			},
 			[120517] = { -- Halo
 				order = 10,
@@ -48,18 +72,6 @@ function iCD:PRIEST(specID)
 			},
 		}
 		t.row2 = {
-			[207946] = { -- Light's Wrath
-				order = 4,
-				range = true,
-			},
-			[10060] = { -- Power Infusion
-				order = 5,
-				range = true,
-				ignoreGCD = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(7, 1, 1))
-				end,
-			},
 			[62618] = { -- Power Word: Barrier
 				order = 7,
 				cost = true,
@@ -67,20 +79,19 @@ function iCD:PRIEST(specID)
 			[47536] = { -- Rapture
 				order = 8,
 				cost = true,
-				ignoreGCD = true,
 			},
 
 			[34433] = { -- Shadowfiend
 				order = 9,
 				showFunc = function()
-					return not select(4, GetTalentInfo(4, 3, 1))
+					return not select(4, GetTalentInfo(3, 2, 1))
 				end,
 			},
 			[123040] = { -- Mindbender
 				order = 9,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(4, 3, 1))
+					return select(4, GetTalentInfo(3, 2, 1))
 				end,
 			},
 			[586] = { -- Fade
@@ -104,6 +115,18 @@ function iCD:PRIEST(specID)
 		t.buffsI = {
 			[589] = { -- Shadow Word: Pain
 				debuff = true,
+			},
+			[204213] = { -- Purge the Wicked
+				debuff = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 1, 1))
+				end,
+			},
+			[214621] = { -- Schism
+				debuff = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
+				end,
 			},
 		}
 	elseif specID == 257 then --Holy
@@ -210,25 +233,41 @@ function iCD:PRIEST(specID)
 			[205448] = { -- Void Bolt
 				order = 2,
 				range = true,
+				showTimeAfterGCD = true,
+			},
+			[205351] = { -- Shadow Word: Void
+				order = 3,
+				range = true,
+				glow = true,
+				glowSound = true,
+				stack = true,
+				charges = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
+				end,
+				showTimeAfterGCD = true,
 			},
 			[8092] = { -- Mind Blast
 				order = 3,
 				range = true,
 				glow = true,
 				glowSound = true,
-				stack = IsEquippedItem(132864),
-				charges = IsEquippedItem(132864),
-			},
-			[199911] = { -- Shadow Word: Death
 				range = true,
-				order = 6,
-				glow = true,
-				charges = true,
-				stack = true,
-				glowSound = "text2",
+				--stack = IsEquippedItem(132864),
+				--charges = IsEquippedItem(132864),
 				showFunc = function()
-					return select(4, GetTalentInfo(4, 2, 1))
+					return not select(4, GetTalentInfo(1, 3, 1))
 				end,
+				showTimeAfterGCD = true,
+			},
+			[263346] = { -- Dark Void
+				order = 5,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+				showTimeAfterGCD = true,
+				range = true,
 			},
 			[32379] = { -- Shadow Word: Death
 				range = true,
@@ -238,24 +277,22 @@ function iCD:PRIEST(specID)
 				stack = true,
 				glowSound = "text2",
 				showFunc = function()
-					return not select(4, GetTalentInfo(7, 2, 1))
+					return select(4, GetTalentInfo(5, 2, 1))
 				end,
 			},
 			[205385] = { -- Shadow Crash
 				order = 7,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 2, 1))
+					return select(4, GetTalentInfo(5, 3, 1))
 				end,
-			},
-			[205065] = { -- Void Torrent (artifact)
-				range = true,
-				order = 8,
+				showTimeAfterGCD = true,
 			},
 		}
 		t.row2 = {
 			[34433] = { -- Shadowfiend
 				order = 6,
+				showTimeAfterGCD = true,
 			},
 			[17] = { -- Power Word: Shield
 				order = 7,
@@ -281,13 +318,22 @@ function iCD:PRIEST(specID)
 			},
 		}
 		t.row4 = {
-
 			[528] = {}, -- Dispel Magic
 			[213634] = {}, -- Purify Disease
 			[32375] = {}, -- Mass Dispel
 			[205369] = { -- Mind Bomb
 				showFunc = function()
-					return select(4, GetTalentInfo(3, 1, 1))
+					return select(4, GetTalentInfo(4, 2, 1))
+				end,
+			},
+			[8122] = { -- Psychic Scream
+				showFunc = function()
+					return not select(4, GetTalentInfo(4, 2, 1))
+				end,
+			},
+			[64044] = { -- Psychic Horror
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 3, 1))
 				end,
 			},
 		}
@@ -299,6 +345,9 @@ function iCD:PRIEST(specID)
 			},
 			[34914] = { -- Vampiric Touch
 				debuff = true,
+			},
+			[288343] = { -- Thought Harvester (Azerite, + Mind sear dmg)
+				stack = "+MS"
 			},
 		}
 	end

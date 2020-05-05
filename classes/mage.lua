@@ -7,7 +7,9 @@ function iCD:MAGE(specID)
 	temp.all.row2 = {}
 	temp.all.row3 = {}
 	temp.all.row4 = {}
-	temp.all.row5 = {}
+	temp.all.row5 = {
+		[198111] = {}, -- Temporal Shield
+	}
 	temp.all.buffsC = {}
 	temp.all.buffsI = {}
 	local t = temp.spec
@@ -123,7 +125,6 @@ function iCD:MAGE(specID)
 			},
 		}
 	elseif specID == 63 then --Fire
-		--gcd = 162243, -- Demon's Bite
 		iCD.outOfRangeSpells = {
 			main = 'Fireball',
 			range = 'Fireball',
@@ -158,12 +159,15 @@ function iCD:MAGE(specID)
 					end
 				end,
 			},
-			[194466] = { -- Phoenix's Flames (artifact)
+			[194466] = { -- Phoenix's Flames
 				range = true,
 				cost = true,
 				charges = true,
 				stack = true,
 				order = 5,
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 3, 1))
+				end,
 			},
 			[108853] = { -- Fire Blast
 				range = true,
@@ -172,26 +176,38 @@ function iCD:MAGE(specID)
 				stack = true,
 				order = 6,
 			},
-			[198929] = { -- Cinderstorm
+			[153561] = { -- Meteor
 				order = 7,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 2, 1))
+					return select(4, GetTalentInfo(7, 3, 1))
 				end,
 			},
 			[44457] = { -- Living Bomb
 				order = 8,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 1, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end,
 			},
-
+			[31661] = { -- Dragon's Breath
+				order = 12,
+				range = true,
+				customRangeSpell = -32321,
+			},
 		}
 		t.row2 = {
 			[190319] = { -- Combustion
 				order = 3,
 				ignoreGCD = true,
+			},
+			[116011] = { -- Rune of Power
+				order = 4,
+				charges = true,
+				stack = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
 			},
 			[235313] = { -- Blazing Barrier
 				order = 8,
@@ -205,21 +221,21 @@ function iCD:MAGE(specID)
 		t.row4 = { -- Blink
 			[1953] = {
 				showFunc = function()
-					return not select(4, GetTalentInfo(2, 1, 1))
+					return not select(4, GetTalentInfo(2, 2, 1))
 				end,
 			},
 			[212653] = { -- Shimmer
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
+					return select(4, GetTalentInfo(2, 2, 1))
 				end,
 				charges = true,
 				stack = true,
 				ignoreGCD = true,
 			},
-			[31661] = {}, -- Dragon's Breath
 			[122] = {}, -- Frost Nova
 			[66] = {}, -- Invisibility
 			[80353] = {}, -- Time Warp
+			[475] = {}, -- Remove Curse
 		}
 		t.buffsC = {
 			[235313] = {}, -- Blazing Barrier
@@ -231,7 +247,6 @@ function iCD:MAGE(specID)
 			[48107] = {}, -- Heating Up
 		}
 	elseif specID == 64 then --Frost
-		--gcd = 162243, -- Demon's Bite
 		iCD.outOfRangeSpells = {
 			main = 'Frostbolt',
 			range = 'Frostbolt',
@@ -264,15 +279,12 @@ function iCD:MAGE(specID)
 					end
 				end,
 				stack = true,
-				stackFunc = function()
+				stackFunc = function(data, gcd)
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', "Fingers of Frost", nil, 'player')
 					if expirationTime then
 						local dura = expirationTime - GetTime()
-						if dura > 5 then
-							return dura,'%.0f'
-						else
-							return dura, '|cffff1a1a%.1f'
-						end
+						local _format, text = iCD:getTimeAfterCast(dura)
+						return text, _format
 					else
 						return ''
 					end
@@ -283,15 +295,12 @@ function iCD:MAGE(specID)
 				range = true,
 				glow = true,
 				glowSound = true,
-				customText = function()
+				customText = function(data, gcd)
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', "Brain Freeze", nil, 'player')
 					if expirationTime then
 						local dura = expirationTime - GetTime()
-						if dura > 5 then
-							return dura,'%.0f'
-						else
-							return dura, '|cffff1a1a%.1f'
-						end
+						local _format, text = iCD:getTimeAfterCast(dura)
+						return text, _format
 					else
 						return ''
 					end
@@ -301,26 +310,30 @@ function iCD:MAGE(specID)
 				range = true,
 				cost = true,
 				order = 6,
+				showTimeAfterCast = true,
 			},
 			[157997] = { -- Ice Nova
 				order = 7,
 				range = true,
+				showTimeAfterCast = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(4, 1, 1))
+					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 			},
 			[153595] = { -- Comet Storm
 				order = 10,
 				cost = true,
 				range = true,
+				showTimeAfterCast = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end,
 			},
-			[257537] = { -- Bonbolt
+			[257537] = { -- Ebonbolt
 				order = 5,
 				cost = true,
 				range = true,
+				showTimeAfterCast = true,
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 3, 1))
 				end,
@@ -334,15 +347,16 @@ function iCD:MAGE(specID)
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', "Freezing Rain", nil, 'player')
 					if expirationTime then
 						local dura = expirationTime - GetTime()
-						if dura > 5 then
-							return dura,'%.0f'
-						else
-							return dura, '|cffff1a1a%.1f'
-						end
+						local _format, text = iCD:getTimeAfterCast(dura)
+						return text, _format
 					else
 						return ''
 					end
 				end,
+			},
+			[120] = {  -- Cone of Cold
+				order = 20,
+				cost = true,
 			},
 		}
 		t.row2 = {
@@ -355,7 +369,7 @@ function iCD:MAGE(specID)
 				ignoreGCD = true,
 				stack = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 2, 1))
+					return select(4, GetTalentInfo(2, 3, 1))
 				end,
 			},
 			[11426] = { -- Ice Barrier
@@ -374,21 +388,21 @@ function iCD:MAGE(specID)
 		t.row4 = { -- Blink
 			[1953] = {
 				showFunc = function()
-					return not select(4, GetTalentInfo(2, 1, 1))
+					return not select(4, GetTalentInfo(2, 2, 1))
 				end,
 			},
 			[212653] = { -- Shimmer
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
+					return select(4, GetTalentInfo(2, 2, 1))
 				end,
 				charges = true,
 				stack = true,
 				ignoreGCD = true,
 			},
-			[120] = {}, -- Cone of Cold
 			[122] = {}, -- Frost Nova
 			[66] = {}, -- Invisibility
 			[80353] = {}, -- Time Warp
+			[33395] = {}, -- Freeze (pet)
 		}
 		t.buffsC = {
 			[11426] = {}, -- Ice Barrier

@@ -162,7 +162,6 @@ function iCD:MONK(specID)
 				end,
 				showTimeAfterGCD = true,
 			},
-
 		}
 		t.row2 = {
 			[122281] = { -- Healing Elixir
@@ -315,36 +314,48 @@ function iCD:MONK(specID)
 				cost = true,
 				showTimeAfterGCD = true,
 			},
-			[205320] = { -- Strike of the Windlord (artifact)
-				order = 5,
-				range = true,
-				cost = true,
-				showTimeAfterGCD = true,
-			},
 			[152175] = { -- Whirling Dragon Punch
 				order = 7,
 				showTimeAfterGCD = true,
 				cost = true,
+				range = true,
+				customCost = function()
+					local isUsable = IsUsableSpell("Whirling Dragon Punch")
+					if not isUsable then
+						return true
+					end
+				end,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 2, 1))
+				end,
+			},
+			[261947] = { -- Fist of the White Tiger
+				order = 8,
+				showTimeAfterGCD = true,
+				cost = true,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 2, 1))
+				end,
 			},
 			[116847] = { -- Rushing Jade Wind
 				order = 10,
 				cost = true,
 				showTimeAfterGCD = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 1, 1))
+					return select(4, GetTalentInfo(6, 2, 1))
+				end,
+			},
+			[123986] = { -- Chi Burst
+				order = 11,
+				cost = true,
+				showTimeAfterGCD = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 			},
 		}
 		t.row2 = {
-			[122281] = { -- Healing Elixir
-				order = 5,
-				stack = true,
-				charges = true,
-				ignoreGCD = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 1, 1))
-				end,
-			},
 			[122278] = { -- Dampening Harm
 				order = 5,
 				ignoreGCD = true,
@@ -359,9 +370,14 @@ function iCD:MONK(specID)
 					return select(4, GetTalentInfo(5, 2, 1))
 				end,
 			},
+			[123904] = { -- Invoke Xuen, the White Tiger
+				order = 1,
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 3, 1))
+				end,
+			},
 			[137639] = { -- Storm, Earth, and Fire
 				order = 2,
-				ignoreGCD = true,
 				stack = true,
 				charges = true,
 			},
@@ -390,7 +406,7 @@ function iCD:MONK(specID)
 				charges = true,
 				ignoreGCD = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
+					return select(4, GetTalentInfo(2, 2, 1))
 				end,
 			},
 			[109132] = { -- Roll
@@ -398,7 +414,7 @@ function iCD:MONK(specID)
 				charges = true,
 				ignoreGCD = true,
 				showFunc = function()
-					return not select(4, GetTalentInfo(2, 1, 1))
+					return not select(4, GetTalentInfo(2, 2, 1))
 				end,
 			},
 			[218164] = {}, -- Detox
@@ -406,30 +422,39 @@ function iCD:MONK(specID)
 			},
 			[116844] = { -- Ring of Peace
 				showFunc = function()
-					return select(4, GetTalentInfo(4, 1, 1))
-				end,
-			},
-			[115315] = { -- Summon Black Ox Statue
-				showFunc = function()
-					return select(4, GetTalentInfo(4, 2, 1))
+					return select(4, GetTalentInfo(4, 3, 1))
 				end,
 			},
 			[116841] = { -- Tiger's Lust
 				showFunc = function()
-					return  select(4, GetTalentInfo(2, 2, 1))
+					return  select(4, GetTalentInfo(2, 3, 1))
 				end,
 			},
 		}
 		t.row5 = {
-
+			[125174] = {}, -- Touch of Karma
 		}
 		t.buffsC = {
 
+			[287062] = { -- Fury of Xuen
+				stack = true,
+				azerite = 117,
+			}
 		}
 		t.buffsI = {
-
+			[286587] = { -- Dance of Chi-Ji
+				azerite = 391,
+				stack = "+SCK",
+			},
+			[115080] = { -- Touch of Death
+				debuff = true,
+			},
+			[137639] = {}, -- Storm, Earth, and Fire
+			[116768] = { -- Free blackout kick
+				stack = "+BOK",
+			},
 		}
-	elseif specID == 270 then --Mistviewer
+	elseif specID == 270 then --Mistweaver
 			t.power = {
 				pos = {
 					x = -990,
@@ -453,7 +478,8 @@ function iCD:MONK(specID)
 				customRangeSpell = 'Tiger Palm',
 				stack = true,
 				stackFunc = function()
-					local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Teachings of the Monastery', nil, 'player')
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Teachings of the Monastery')
+					--local name, _, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitBuff('player', 'Teachings of the Monastery', nil, 'player')
 					if count and count > 0 then
 						return count
 					else
@@ -570,7 +596,7 @@ function iCD:MONK(specID)
 			},
 			[116844] = { -- Ring of Peace
 				showFunc = function()
-					return select(4, GetTalentInfo(4, 1, 1))
+					return select(4, GetTalentInfo(4, 3, 1))
 				end,
 			},
 			[115313] = { -- Summon Jade Serpent Statue

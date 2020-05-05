@@ -92,6 +92,17 @@ function iCD:DEMONHUNTER(specID)
 			[185123] = { -- Throw Glaive
 				order = 10,
 				range = true,
+				stack = select(4, GetTalentInfo(6, 2, 1)),
+				charges = select(4, GetTalentInfo(6, 2, 1)),
+				showTimeAfterGCD = true,
+			},
+			[211881] = { -- Fel Eruption
+				order = 10,
+				range = true,
+				cost = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 3, 1))
+				end,
 				showTimeAfterGCD = true,
 			},
 		}
@@ -124,10 +135,18 @@ function iCD:DEMONHUNTER(specID)
 		t.row4 = {
 			[179057] = {}, -- Chaos Nova
 			[278326] = {}, -- Consume Magic
-			[281854] = {}, -- Torment
+			[281854] = { -- Torment
+				ignoreGCD = true,
+			},
+			[217832] = {}, -- Imprison
+			[188501] = {}, -- Spectral Sight
 		}
 		t.buffsI = {
 			[162264] = {}, -- Metamorphosis
+			[275936] = { -- Seething Power
+			stack = true,
+			azerite = 245,
+		},
 		}
 		t.buffsC = {
 			[208579] = { -- Nemesis
@@ -174,6 +193,10 @@ function iCD:DEMONHUNTER(specID)
 			},
 			[212800] = { -- Blur
 				stack = '-DT',
+			},
+			[273232] = { -- Furious Gaze
+				stack = "+H",
+				azerite = 159,
 			},
 		}
 	elseif specID == 581 then --Vengeance
@@ -313,6 +336,7 @@ function iCD:DEMONHUNTER(specID)
 			[185245] = { -- Torment
 				ignoreGCD = true,
 			},
+
 			[278326] = {}, -- Consume Magic
 		}
 		t.row5 = {

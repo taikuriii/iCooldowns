@@ -55,18 +55,32 @@ iCD.barBD = {
 }
 iCD.onCD = {}
 iCD.buffs = {}
+iCD.PetBuffs = {}
 iCD.BuffsI = {}
+iCD.PetBuffsI = {}
 iCD.BuffsC = {}
+iCD.PetBuffsC = {}
 iCD.debuffs = {}
 iCD.DebuffsI = {}
 iCD.DebuffsC = {}
 iCD.spells = {}
 iCD.extras = {}
+iCD.currentEssences = {major = {0,0}, minor = {}}
+local currentAzeritePowers = {}
 local buffFrames = {
 	['row5'] = true,
 	['buffsI'] = true,
 	['buffsC'] = true,
 }
+--APIs to locals
+local IsItemInRange = IsItemInRange
+local IsSpellInRange = IsSpellInRange
+local UnitCastingInfo = UnitCastingInfo
+local GetItemCooldown = GetItemCooldown
+local GetSpellCooldown = GetSpellCooldown
+local GetTime = GetTime
+local GetSpellCharges = GetSpellCharges
+--
 local function spairs(t, order)
     -- collect the keys
     local keys = {}
@@ -89,6 +103,33 @@ local function spairs(t, order)
         end
     end
 end
+local function UpdateAzeritePowers()
+	currentAzeritePowers = nil
+	currentAzeritePowers = {}
+	for _, itemLocation in AzeriteUtil.EnumerateEquipedAzeriteEmpoweredItems() do
+		for _,tier in pairs(C_AzeriteEmpoweredItem.GetAllTierInfo(itemLocation)) do
+			for _,azeriteID in pairs(tier.azeritePowerIDs) do
+				if C_AzeriteEmpoweredItem.IsPowerSelected(itemLocation, azeriteID) then
+					currentAzeritePowers[azeriteID] = true
+					break
+				end
+			end
+		end
+	end
+end
+
+
+function iCD:Essences(essenceID, major, minRank)
+	if major then
+			if minRank then
+				return iCD.currentEssences.major[1] == essenceID and iCD.currentEssences.major[2] >= minRank
+			end
+			return iCD.currentEssences.major[1] == essenceID
+	else
+		return minRank and (iCD.currentEssences.minor[essenceID] and iCD.currentEssences.minor[essenceID] >= minRank) or iCD.currentEssences.minor[essenceID]
+	end
+end
+--isSelected = C_AzeriteEmpoweredItem.IsPowerSelected(itemLocation, powerid)
 function iCD.UnitBuff(target,buffName)
 	for i = 1, 41 do -- Buffs
 		local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID,canApplyAura,isBossDebuff,nameplateShowAll,timeMod,value1,value2,value3 = UnitBuff(target, i)
@@ -102,7 +143,6 @@ function iCD.UnitBuff(target,buffName)
 end
 
 function iCD.UnitDebuff(buffName, target)
-
 	for i = 1, 41 do -- Debuffs
 		local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID,canApplyAura,isBossDebuff,nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, 'player')
 		if name == nil then
@@ -112,6 +152,76 @@ function iCD.UnitDebuff(buffName, target)
 		end
 	end
 	return
+end
+do
+	local gcdInfo = {
+		left = 0,
+		duration = 0,
+		start = 0,
+		lastFrame = 0,
+	}
+	function iCD:getTimeAfterGCD(t)
+		local _time = GetTime()
+		if gcdInfo.lastFrame ~= _time then
+			local gS, gcdD = GetSpellCooldown(iCD.gcd)
+			local gCD = gS+gcdD-_time
+			gcdInfo = {
+				left = gCD,
+				duration = gcdD,
+				start = gS,
+				lastFrame = _time
+			}
+		end
+		if gcdInfo.start == 0 then
+			return "%.1f", t
+		end
+		if t <= gcdInfo.duration then
+			return '|cffFF9999(%.0f)', t-gcdInfo.duration
+		else
+			t = t - gcdInfo.duration
+			if t > 5 then
+				return '|cffFF9999%.0f', t
+			elseif t <= 0.05 then
+				return "|cffCCFFFF%.1f", t -- change color?
+			elseif t < 2 then
+				return '|cffCCFFFF%.1f', t
+			else
+				return '|cfffc2ffc%.1f', t
+			end
+		end
+end
+do
+	local castInfo = {
+		left = 0,
+		lastFrame = 0,
+	}
+	function iCD:getTimeAfterCast(t)
+		local _time = GetTime()
+		if castInfo.lastFrame ~= _time then
+				local name, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
+				if endTimeMS then
+					castInfo.left = endTimeMS/1000 - _time
+				else
+					local _format, text = iCD:getTimeAfterGCD(t)
+					return _format, text
+				end
+		end
+		if castInfo.left > t then -- ready during cast, use gcd
+			local _format, text = iCD:getTimeAfterGCD(t)
+			return _format, text
+		end
+			t = t - castInfo.left
+			if t > 5 then
+				return '|cffFF9999%.0f', t
+			elseif t <= 0.05 then
+				return "%.1f", t
+			elseif t < 2 then
+				return '|cffCCFFFF%.1f', t
+			else
+				return '|cfffc2ffc%.1f', t
+			end
+		end
+	end
 end
 local addon = CreateFrame('Frame')
 addon:SetScript("OnEvent", function(self, event, ...)
@@ -162,42 +272,59 @@ iCD.EHtext:SetFont(iCD.font, 16, 'OUTLINE')
 iCD.EHtext:SetPoint('BOTTOM', iCD.hpBar, 'TOP', 0,115)
 iCD.EHtext:SetText('')
 
+iCD.positions = {
+	['row1'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,63) end, changed = false},
+	['row2'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,42) end, changed = false},
+	['row3'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'TOP',-25,115) end, changed = false},
+	['row4'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,17) end, changed = false},
+	['row5'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'BOTTOMLEFT',0,100) end, changed = false},
+	['buffsI'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOMLEFT', iCD.hpBar, 'TOP',25,115) end, changed = false},
+	['buffsC'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,88) end, changed = false},
+}
+
 --row1
 iCD.row1 = CreateFrame('frame', nil, UIParent)
 iCD.row1:SetSize(100,20)
 --iCD.row1:SetBackdrop(iCD.backdrop)
 --iCD.row1:SetBackdropBorderColor(0,0,0,1)
 --iCD.row1:SetBackdropColor(0.2,0.2,0.2,0.5)
-iCD.row1:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,63)
+--iCD.row1:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,63)
+iCD.positions["row1"].default(iCD.row1)
 --row2
 iCD.row2 = CreateFrame('frame', nil, UIParent)
 iCD.row2:SetSize(100,20)
 --iCD.row2:SetBackdrop(iCD.backdrop)
 --iCD.row2:SetBackdropBorderColor(0,0,0,1)
 --iCD.row2:SetBackdropColor(0.2,0.2,0.2,0.5)
-iCD.row2:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,42)
+--iCD.row2:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,42)
+iCD.positions["row2"].default(iCD.row2)
 -- Row 3
 iCD.row3 = CreateFrame('frame', nil, UIParent)
 iCD.row3:SetSize(100,20)
-iCD.row3:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'TOP',-25,115)
+--iCD.row3:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'TOP',-25,115)
+iCD.positions["row3"].default(iCD.row3)
 -- Row 4 (only on cd)
 iCD.row4 = CreateFrame('frame', nil, UIParent)
 iCD.row4:SetSize(iCD.rowSizes.row4,iCD.rowSizes.row4)
-iCD.row4:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,17)
+--iCD.row4:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,17)
+iCD.positions["row4"].default(iCD.row4)
 -- Row 5 Big Buffs
 iCD.row5 = CreateFrame('frame', nil, UIParent)
 iCD.row5:SetSize(iCD.rowSizes.row5,iCD.rowSizes.row5)
-iCD.row5:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'BOTTOMLEFT',0,100)
+--iCD.row5:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'BOTTOMLEFT',0,100)
+iCD.positions["row5"].default(iCD.row5)
 
 -- Buffs (Important)
 iCD.buffsI = CreateFrame('frame', nil, UIParent)
 iCD.buffsI:SetSize(iCD.rowSizes.buffsI,iCD.rowSizes.buffsI)
-iCD.buffsI:SetPoint('BOTTOMLEFT', iCD.hpBar, 'TOP',25,115)
+--iCD.buffsI:SetPoint('BOTTOMLEFT', iCD.hpBar, 'TOP',25,115)
+iCD.positions["buffsI"].default(iCD.buffsI)
 
 -- Buffs (center)
 iCD.buffsC = CreateFrame('frame', nil, UIParent)
 iCD.buffsC:SetSize(iCD.rowSizes.buffsC,iCD.rowSizes.buffsC)
-iCD.buffsC:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,88)
+--iCD.buffsC:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,88)
+iCD.positions["buffsC"].default(iCD.buffsC)
 
 -- GCD
 iCD.GCD = CreateFrame('Statusbar', nil, UIParent)
@@ -234,7 +361,7 @@ iCD.outOfRangeFrame = CreateFrame('frame', nil, UIParent)
 iCD.outOfRange = iCD.outOfRangeFrame:CreateFontString('iCD_outOfRange')
 iCD.outOfRange:SetFont(iCD.font, 32, 'OUTLINE')
 iCD.outOfRange:SetJustifyH('CENTER')
-iCD.outOfRange:SetPoint('CENTER', UIParent, 'CENTER', -960, 50)
+iCD.outOfRange:SetPoint('CENTER', UIParent, 'CENTER', -960, 70)
 iCD.outOfRange:SetText('OUT OF RANGE')
 iCD.outOfRange:SetTextColor(1,0,0)
 iCD.outOfRange:Hide()
@@ -278,31 +405,27 @@ function iCD:checkRange(force)
 	if force or (t > icdRangeCheckTimer + 0.1) then
 		icdRangeCheckTimer = t
 		if UnitExists('target') then
-			if IsSpellInRange(iCD.outOfRangeSpells.range, 'target') == 0 then
-				if iCD.outOfRange.color == 2 then
-					iCD.outOfRange:SetTextColor(1,0,0)
-					iCD.outOfRange.color = 1
+			local rangeID, rangeColor, range, lastRange = iCD:GetRange('target')
+			if rangeID == 3 then
+				if iCD.outOfRange.anim then
+					iCD.outOfRange.flash:Stop()
+					iCD.outOfRange:Hide()
 				end
-			else
-				if iCD.outOfRange.color == 1 then
-					iCD.outOfRange:SetTextColor(1,.5,0)
-					iCD.outOfRange.color = 2
-				end
-			end
-			if IsSpellInRange(iCD.outOfRangeSpells.main, 'target') == 0 then
-				if not iCD.outOfRange.anim then
+			elseif not iCD.outOfRange.anim then
 					iCD.outOfRange.flash:Play()
 					iCD.outOfRange:Show()
-				end
-			elseif iCD.outOfRange.anim then
-				iCD.outOfRange.flash:Stop()
-				iCD.outOfRange:Hide()
 			end
-		else
-			if iCD.outOfRange.anim then
-				iCD.outOfRange.flash:Stop()
-				iCD.outOfRange:Hide()
+			if iCD.outOfRange.currentColor ~= rangeID then
+				iCD.outOfRange:SetTextColor(rangeColor.r, rangeColor.g, rangeColor.b)
+				iCD.outOfRange.currentColor = rangeID
 			end
+			if iCD.outOfRange.currentRange ~= range then
+				iCD.outOfRange.currentRange = range
+				iCD.outOfRange:SetText(string.format("%d-%d\nOUT OF RANGE", range, lastRange))
+			end
+		elseif iCD.outOfRange.anim then
+			iCD.outOfRange.flash:Stop()
+			iCD.outOfRange:Hide()
 		end
 	end
 end
@@ -332,11 +455,28 @@ function iCD:createTextString(id)
 		end
 	end
 end
+do
+	local gcdInfo = {
+		left = 0,
+		duration = 0,
+		start = 0,
+		lastFrame = 0,
+	}
 function iCD:updateFrame(id, row)
 	local data = iCD.frames[row][id].data
+	if gcdInfo.lastFrame ~= GetTime() then -- TODO : Change whole function to use this
+		local gS, gcdD = GetSpellCooldown(iCD.gcd)
+		local gCD = gS+gcdD-GetTime()
+		gcdInfo = {
+			left = gCD,
+			duration = gcdD,
+			start = gS,
+			lastFrame = GetTime()
+		}
+	end
 	if buffFrames[row] then
 		if data.customText then
-			text, f = data.customText(data)
+			text, f = data.customText(data, gcdInfo)
 			if f then
 				iCD.frames[row][id].cooldownText:SetFormattedText(f, text)
 			else
@@ -370,7 +510,7 @@ function iCD:updateFrame(id, row)
 		local cost = false
 		local range = false
 		if data.customCost then
-			if not data.customCost(data) then
+			if data.customCost(data, gcdInfo) then
 				cost = true
 			end
 		elseif data.cost then
@@ -379,16 +519,29 @@ function iCD:updateFrame(id, row)
 			end
 		end
 		if data.customRange then
-			if not data.customRange(data) then
+			if not data.customRange(data, gcdInfo) then
 				range = true
 			end
 		elseif data.range then
 			local rangeSpell = data.customRangeSpell or data.spellName
-			if IsSpellInRange(rangeSpell, 'target') == 0 then
+			if data.customRangeSpell and tonumber(data.customRangeSpell) then
+				if not IsItemInRange(data.customRangeSpell*-1, 'target') then
 				range = true
+				end
+			else
+				if IsSpellInRange(rangeSpell, 'target') == 0 then
+					range = true
+				end
 			end
 		end
-		if data.AM and data.AM(data) then
+		--if data.customColor then
+		--	local r,g,b,a = data.customColor()
+		--	local colorStr = string.format("%s%s%s%s", r or 0,g or 0,b or 0,a or 0)
+		--	if data.unMod ~= colorStr then
+		--		iCD.frames[row][id].tex:SetVertexColor(r,g,b,a)
+		--		iCD.frames[row][id].data.unMod = colorStr
+		--	end
+		if data.AM and data.AM(data, gcdInfo) then
 			if data.unMod ~= 'am' then
 				iCD.frames[row][id].tex:SetVertexColor(1,0,1,1)
 				iCD.frames[row][id].data.unMod = 'am'
@@ -411,7 +564,7 @@ function iCD:updateFrame(id, row)
 		end
 		local text = 0
 		if data.customText then
-			text, f = data.customText(data)
+			text, f = data.customText(data, gcdInfo)
 			if f then
 				iCD.frames[row][id].cooldownText:SetFormattedText(f, text)
 			else
@@ -421,6 +574,7 @@ function iCD:updateFrame(id, row)
 			local gS, gcdD = GetSpellCooldown(iCD.gcd)
 			local gCD = gS+gcdD-GetTime()
 			local s, cd = 0,0
+			local readyDuringCast = false
 			if data.customDuration then
 				text = data.customDuration - GetTime()
 			elseif data.showTimeAfterGCD then
@@ -442,6 +596,48 @@ function iCD:updateFrame(id, row)
 				if s > 0 then
 					if gcdD ~= cd then
 						if gCD > 0 then
+							text = cdD - gCD
+						else
+							text = cdD
+						end
+					end
+				end
+			elseif data.showTimeAfterCast then
+				if data.charges then
+					local c,m,sd,d = GetSpellCharges(data.usedBy)
+					if c == m then
+						s = 0
+						cd = d
+					else
+						s = sd
+						cd = d
+					end
+				elseif data.item or data.usedBy < 0 then
+					s,cd = GetItemCooldown(data.usedBy > 0 and data.usedBy or -data.usedBy)
+				else
+					s,cd = GetSpellCooldown(data.usedBy)
+				end
+				local cdD = s+cd-GetTime()
+				if s > 0 then
+					if gcdD ~= cd then
+						local name, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
+						if endTimeMS then
+							local castLeft = endTimeMS/1000 - GetTime()
+							if castLeft < cdD then
+								if gCD > 0 and gCD > castLeft then
+									text = cdD - gCD
+								else
+									text = cdD-castLeft
+								end
+							else
+								if gCD > 0 then
+									text = cdD - gCD
+								else
+									text = cdD
+								end
+								readyDuringCast = true
+							end
+						elseif gCD > 0 then
 							text = cdD - gCD
 						else
 							text = cdD
@@ -498,20 +694,33 @@ function iCD:updateFrame(id, row)
 					iCD.frames[row][id].onCD = false
 				end
 			end
-			if data.showTimeAfterGCD and gcdD > 0 then
+			if (data.showTimeAfterGCD and gcdD > 0) or (data.showTimeAfterCast and text > 0) then
 				if text > 60 then
 					local s = (math.floor(text * 10 + 0.5) / 10)%60
 					local m = math.floor(text/60)
 					iCD.frames[row][id].cooldownText:SetFormattedText('%d:%.2d', m,s)
 				elseif text > 5 then
-					iCD.frames[row][id].cooldownText:SetFormattedText('|cffFF9999%.0f', text)
+					if readyDuringCast then
+						iCD.frames[row][id].cooldownText:SetFormattedText('|cffFF9999(%.0f)', text)
+					else
+						iCD.frames[row][id].cooldownText:SetFormattedText('|cffFF9999%.0f', text)
+					end
+					
 				elseif text > 0 then
 					if text <= 0.05 then
 						iCD.frames[row][id].cooldownText:SetText('')
 					elseif text < 2 then
-						iCD.frames[row][id].cooldownText:SetFormattedText('|cffCCFFFF%.1f', text)
+						if readyDuringCast then
+							iCD.frames[row][id].cooldownText:SetFormattedText('|cffCCFFFF(%.1f)', text)
+						else
+							iCD.frames[row][id].cooldownText:SetFormattedText('|cffCCFFFF%.1f', text)
+						end
 					else
-						iCD.frames[row][id].cooldownText:SetFormattedText('|cfffc2ffc%.1f', text)
+						if readyDuringCast then
+							iCD.frames[row][id].cooldownText:SetFormattedText('|cfffc2ffc(%.1f)', text)
+						else
+							iCD.frames[row][id].cooldownText:SetFormattedText('|cfffc2ffc%.1f', text)
+						end
 					end
 				else
 					if row == 'row4' then
@@ -544,7 +753,7 @@ function iCD:updateFrame(id, row)
 		end
 	end
 	if data.stackFunc then
-		local txt, txtFormat = data.stackFunc(data)
+		local txt, txtFormat = data.stackFunc(data, gcdInfo)
 		if txtFormat then
 			iCD.frames[row][id].stackText:SetFormattedText(txtFormat, txt)
 		else
@@ -554,6 +763,7 @@ function iCD:updateFrame(id, row)
 		local c,m,sd,d = GetSpellCharges(data.usedBy)
 		iCD.frames[row][id].stackText:SetText(c)
 	end
+end
 end
 function iCD:CreateNewFrame(id, row)
 	if iCD.frames[row][id] then
@@ -707,6 +917,9 @@ function iCD:updateCDs()
 		if v.showTimeAfterGCD then
 			iCD.frames.row4[id].data.showTimeAfterGCD = true
 		end
+		if v.showTimeAfterCast then
+			iCD.frames.row4[id].data.showTimeAfterCast = true
+		end
 		iCD.frames.row4[id].tex:SetVertexColor(1,1,1,1)
 		iCD.frames.row4[id].data.unMod = 'none'
 		iCD.frames.row4[id]:Show()
@@ -725,7 +938,6 @@ function iCD:updateOnCD()
 	local temp = {}
 	for k,v in pairs(iCD.general.row4) do
 		if not v.showFunc or (v.showFunc and v.showFunc()) and (not v.level or v.level <= iCD.level) then
-
 			if v.itemReq or k < 0 then
 				if type(v.itemReq) == 'table' then
 					for k,_ in pairs(v.itemReq) do
@@ -800,130 +1012,204 @@ function iCD:updateBuffs()
 	local temp = {}
 	local tempI = {}
 	local tempC = {}
-	for i = 1, 41 do -- Buffs
-		local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('player', i)
-		if not name then
-			break
-		else
-			if iCD.buffs[spellID] then
-				local data = {
-					endTime = expirationTime,
-					texture = icon,
-				}
-				if iCD.buffs[spellID].stack then
-					if iCD.buffs[spellID].stackFunc then
-						data.stackFunc = iCD.buffs[spellID].stackFunc
-					elseif type(iCD.buffs[spellID].stack) == 'string' then
-						if iCD.buffs[spellID].stack == 'caster' then
-							data.stack = UnitName(sourceUnit)
+	if iCD.hasPlayerBuffs then
+		for i = 1, 41 do -- Buffs
+			local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('player', i)
+			if not name then
+				break
+			else
+				if iCD.buffs[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.buffs[spellID].stack then
+						if iCD.buffs[spellID].stackFunc then
+							data.stackFunc = iCD.buffs[spellID].stackFunc
+						elseif type(iCD.buffs[spellID].stack) == 'string' then
+							if iCD.buffs[spellID].stack == 'caster' then
+								data.stack = UnitName(sourceUnit)
+							else
+								data.stack = iCD.buffs[spellID].stack
+							end
 						else
-							data.stack = iCD.buffs[spellID].stack
+							data.stack = count
 						end
-					else
-						data.stack = count
 					end
-				end
-				if iCD.buffs[spellID].customText then
-					data.customText = iCD.buffs[spellID].customText
-				end
-				temp[spellID] = data
-			end
-			if iCD.BuffsI[spellID] then
-				local data = {
-					endTime = expirationTime,
-					texture = icon,
-				}
-				if iCD.BuffsI[spellID].stack then
-					if iCD.BuffsI[spellID].stackFunc then
-						data.stackFunc = iCD.BuffsI[spellID].stackFunc
-					elseif type(iCD.BuffsI[spellID].stack) == 'string' then
-						data.stack = iCD.BuffsI[spellID].stack
-					else
-						data.stack = count
+					if iCD.buffs[spellID].customText then
+						data.customText = iCD.buffs[spellID].customText
 					end
+					temp[spellID] = data
 				end
-				if iCD.BuffsI[spellID].customText then
-					data.customText = iCD.BuffsI[spellID].customText
-				end
-				tempI[spellID] = data
-			end
-			if iCD.BuffsC[spellID] then
-				local data = {
-					endTime = expirationTime,
-					texture = icon,
-				}
-				if iCD.BuffsC[spellID].stack then
-					if iCD.BuffsC[spellID].stackFunc then
-						data.stackFunc = iCD.BuffsC[spellID].stackFunc
-					elseif type(iCD.BuffsC[spellID].stack) == 'string' then
-						data.stack = iCD.BuffsC[spellID].stack
-					else
-						data.stack = count
+				if iCD.BuffsI[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.BuffsI[spellID].stack then
+						if iCD.BuffsI[spellID].stackFunc then
+							data.stackFunc = iCD.BuffsI[spellID].stackFunc
+						elseif type(iCD.BuffsI[spellID].stack) == 'string' then
+							data.stack = iCD.BuffsI[spellID].stack
+						else
+							data.stack = count
+						end
 					end
+					if iCD.BuffsI[spellID].customText then
+						data.customText = iCD.BuffsI[spellID].customText
+					end
+					tempI[spellID] = data
 				end
-				if iCD.BuffsC[spellID].customText then
-					data.customText = iCD.BuffsC[spellID].customText
+				if iCD.BuffsC[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.BuffsC[spellID].stack then
+						if iCD.BuffsC[spellID].stackFunc then
+							data.stackFunc = iCD.BuffsC[spellID].stackFunc
+						elseif type(iCD.BuffsC[spellID].stack) == 'string' then
+							data.stack = iCD.BuffsC[spellID].stack
+						else
+							data.stack = count
+						end
+					end
+					if iCD.BuffsC[spellID].customText then
+						data.customText = iCD.BuffsC[spellID].customText
+					end
+					tempC[spellID] = data
 				end
-				tempC[spellID] = data
 			end
 		end
 	end
-	for i = 1, 41 do -- Debuffs
-		local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitDebuff('target', i, 'player')
-		if not name then
-			break
-		else
-			if iCD.debuffs[spellID] then
-				local data = {
-					endTime = expirationTime,
-					texture = icon,
-				}
-				if iCD.debuffs[spellID].stack then
-					if type(iCD.debuffs[spellID].stack) == 'string' then
-						data.stack = iCD.debuffs[spellID].stack
-					else
-						data.stack = count
+	if iCD.hasPetAuras then
+		for i = 1, 41 do -- Pet Buffs
+			local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('pet', i)
+			if not name then
+				break
+			else
+				if iCD.PetBuffs[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.PetBuffs[spellID].stack then
+						if iCD.PetBuffs[spellID].stackFunc then
+							data.stackFunc = iCD.PetBuffs[spellID].stackFunc
+						elseif type(iCD.PetBuffs[spellID].stack) == 'string' then
+							if iCD.buffs[spellID].stack == 'caster' then
+								data.stack = UnitName(sourceUnit)
+							else
+								data.stack = iCD.PetBuffs[spellID].stack
+							end
+						else
+							data.stack = count
+						end
 					end
+					if iCD.PetBuffs[spellID].customText then
+						data.customText = iCD.PetBuffs[spellID].customText
+					end
+					temp[spellID] = data
 				end
-				if iCD.debuffs[spellID].customText then
-					data.customText = iCD.debuffs[spellID].customText
+				if iCD.PetBuffsI[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.PetBuffsI[spellID].stack then
+						if iCD.PetBuffsI[spellID].stackFunc then
+							data.stackFunc = iCD.PetBuffsI[spellID].stackFunc
+						elseif type(iCD.PetBuffsI[spellID].stack) == 'string' then
+							data.stack = iCD.PetBuffsI[spellID].stack
+						else
+							data.stack = count
+						end
+					end
+					if iCD.PetBuffsI[spellID].customText then
+						data.customText = iCD.PetBuffsI[spellID].customText
+					end
+					tempI[spellID] = data
 				end
-				temp[spellID] = data
+				if iCD.PetBuffsC[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.PetBuffsC[spellID].stack then
+						if iCD.PetBuffsC[spellID].stackFunc then
+							data.stackFunc = iCD.PetBuffsC[spellID].stackFunc
+						elseif type(iCD.PetBuffsC[spellID].stack) == 'string' then
+							data.stack = iCD.PetBuffsC[spellID].stack
+						else
+							data.stack = count
+						end
+					end
+					if iCD.PetBuffsC[spellID].customText then
+						data.customText = iCD.PetBuffsC[spellID].customText
+					end
+					tempC[spellID] = data
+				end
+			end
+		end
+	end
+	if iCD.hasTargetDebuffs then
+		for i = 1, 41 do -- Debuffs
+			local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitDebuff('target', i, 'player')
+			if not name then
+				break
+			else
+				if iCD.debuffs[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.debuffs[spellID].stack then
+						if type(iCD.debuffs[spellID].stack) == 'string' then
+							data.stack = iCD.debuffs[spellID].stack
+						else
+							data.stack = count
+						end
+					end
+					if iCD.debuffs[spellID].customText then
+						data.customText = iCD.debuffs[spellID].customText
+					end
+					temp[spellID] = data
 
-			end
-			if iCD.DebuffsI[spellID] then
-				local data = {
-					endTime = expirationTime,
-					texture = icon,
-				}
-				if iCD.DebuffsI[spellID].stack then
-					if type(iCD.DebuffsI[spellID].stack) == 'string' then
-						data.stack = iCD.DebuffsI[spellID].stack
-					else
-						data.stack = count
+				end
+				if iCD.DebuffsI[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.DebuffsI[spellID].stack then
+						if type(iCD.DebuffsI[spellID].stack) == 'string' then
+							data.stack = iCD.DebuffsI[spellID].stack
+						else
+							data.stack = count
+						end
 					end
-				end
-				if iCD.DebuffsI[spellID].customText then
-					data.customText = iCD.DebuffsI[spellID].customText
-				end
-				tempI[spellID] = data
-			end
-			if iCD.DebuffsC[spellID] then
-				local data = {
-					endTime = expirationTime,
-					texture = icon,
-				}
-				if iCD.DebuffsC[spellID].stack then
-					if type(iCD.DebuffsC[spellID].stack) == 'string' then
-						data.stack = iCD.DebuffsC[spellID].stack
-					else
-						data.stack = count
+					if iCD.DebuffsI[spellID].customText then
+						data.customText = iCD.DebuffsI[spellID].customText
 					end
+					tempI[spellID] = data
 				end
-				if iCD.DebuffsC[spellID].customText then
-					data.customText = iCD.DebuffsC[spellID].customText
+				if iCD.DebuffsC[spellID] then
+					local data = {
+						endTime = expirationTime,
+						texture = icon,
+					}
+					if iCD.DebuffsC[spellID].stack then
+						if type(iCD.DebuffsC[spellID].stack) == 'string' then
+							data.stack = iCD.DebuffsC[spellID].stack
+						else
+							data.stack = count
+						end
+					end
+					if iCD.DebuffsC[spellID].customText then
+						data.customText = iCD.DebuffsC[spellID].customText
+					end
+					tempC[spellID] = data
 				end
-				tempC[spellID] = data
 			end
 		end
 	end
@@ -1017,7 +1303,10 @@ function iCD:updateBuffList()
 	if not iCD.class or not iCD.specID then
 		return
 	end
-	local function addIfEligible(spellID,v,b,d)
+	iCD.hasPetAuras = false
+	iCD.hasTargetDebuffs = false
+	iCD.hasPlayerBuffs = false
+	local function addIfEligible(spellID,v,b,d,p)
 		if v.showFunc then
 			if not v.showFunc() then return end
 		end
@@ -1030,59 +1319,75 @@ function iCD:updateBuffList()
 				if not IsEquippedItem(v.itemReq) then return end
 			end
 		end
+		if v.azerite then
+			if not currentAzeritePowers[v.azerite] then return end
+		end
 		if v.debuff then
 			d[spellID] = v
+			iCD.hasTargetDebuffs = true
+		elseif v.pet then
+			p[spellID] = v
+			iCD.hasPetAuras = true
 		else
+			iCD.hasPlayerBuffs = true
 			b[spellID] = v
 		end
 	end
 	local tempBuffs = {}
 	local tempDebuffs = {}
+	local tempPetBuffs = {}
 
 	for k,v in pairs(iCD.spellData.spec.row5) do
-		addIfEligible(k,v, tempBuffs, tempDebuffs)
+		addIfEligible(k,v, tempBuffs, tempDebuffs, tempPetBuffs)
 	end
 	for k,v in pairs(iCD.spellData.all.row5) do
-		addIfEligible(k,v, tempBuffs, tempDebuffs)
+		addIfEligible(k,v, tempBuffs, tempDebuffs, tempPetBuffs)
 	end
 	for k,v in pairs(iCD.general.row5) do
-		addIfEligible(k,v, tempBuffs, tempDebuffs)
+		addIfEligible(k,v, tempBuffs, tempDebuffs, tempPetBuffs)
 	end
 	iCD.buffs = tempBuffs
 	iCD.debuffs = tempDebuffs
+	iCD.PetBuffs = tempPetBuffs
 	-- buffsI
 	local tempDebuffsI = {}
 	local tempBuffsI = {}
+	local tempPetBuffsI = {}
 	for k,v in pairs(iCD.spellData.spec.buffsI) do
-		addIfEligible(k,v, tempBuffsI, tempDebuffsI)
+		addIfEligible(k,v, tempBuffsI, tempDebuffsI, tempPetBuffsI)
 	end
 	for k,v in pairs(iCD.spellData.all.buffsI) do
-		addIfEligible(k,v, tempBuffsI, tempDebuffsI)
+		addIfEligible(k,v, tempBuffsI, tempDebuffsI, tempPetBuffsI)
 	end
 	for k,v in pairs(iCD.general.buffsI) do
-		addIfEligible(k,v, tempBuffsI, tempDebuffsI)
+		addIfEligible(k,v, tempBuffsI, tempDebuffsI, tempPetBuffsI)
 	end
 	iCD.BuffsI = tempBuffsI
 	iCD.DebuffsI = tempDebuffsI
+	iCD.PetBuffsI = tempPetBuffsI
 
 	local tempDebuffsC = {}
 	local tempBuffsC = {}
+	local tempPetBuffsC = {}
+
 	for k,v in pairs(iCD.spellData.spec.buffsC) do
-		addIfEligible(k,v, tempBuffsC, tempDebuffsC)
+		addIfEligible(k,v, tempBuffsC, tempDebuffsC, tempPetBuffsC)
 	end
 	for k,v in pairs(iCD.spellData.all.buffsC) do
-		addIfEligible(k,v, tempBuffsC, tempDebuffsC)
+		addIfEligible(k,v, tempBuffsC, tempDebuffsC, tempPetBuffsC)
 	end
 	for k,v in pairs(iCD.general.buffsC) do
-		addIfEligible(k,v, tempBuffsC, tempDebuffsC)
+		addIfEligible(k,v, tempBuffsC, tempDebuffsC, tempPetBuffsC)
 	end
 	iCD.BuffsC = tempBuffsC
 	iCD.DebuffsC = tempDebuffsC
+	iCD.PetBuffsC = tempPetBuffsC
 
 	iCD:updateBuffs()
 end
 function iCD:UpdateSkills()
 	iCD:resetGlows()
+	iCD.general = iCD:GetGenerals(iCD.specID)
 	local temp = {row1 = {}, row2 = {}, row3 = {}}
 	local function add(k,v, row)
 		if v.level and v.level > iCD.level then return end
@@ -1093,6 +1398,26 @@ function iCD:UpdateSkills()
 	if not iCD.class or not iCD.specID then
 		return
 	end
+	iCD.currentEssences = {major = {0,0}, minor = {}}
+	-- essences
+	if (C_AzeriteEssence.CanOpenUI()) then
+		for k,v in pairs (C_AzeriteEssence.GetMilestones() or {}) do
+			if v.slot == Enum.AzeriteEssence.MainSlot then
+				local id = C_AzeriteEssence.GetMilestoneEssence(v.ID)
+				if id then
+					local e = C_AzeriteEssence.GetEssenceInfo(id)
+					iCD.currentEssences.major = {id, e.rank}
+					iCD.currentEssences.minor[id] = e.rank
+				end
+			elseif v.slot then -- minor
+				local id = C_AzeriteEssence.GetMilestoneEssence(v.ID)
+				if id then
+					local e = C_AzeriteEssence.GetEssenceInfo(id)
+					iCD.currentEssences.minor[id] = e.rank
+				end
+			end
+		end
+	end
 	--iCD.gcd = iCD[iCD.class][iCD.specID].gcd
 	iCD.gcd = 61304
 	for row,t in pairs(iCD.spellData.spec) do
@@ -1102,7 +1427,15 @@ function iCD:UpdateSkills()
 			end
 		end
 	end
-	for k,v in pairs(iCD.spellData.all) do
+	for row,t in pairs(iCD.spellData.all) do
+		if row == 'row1' or row == 'row2' or row == 'row3' then
+			for k,v in pairs(t) do
+				add(k,v,row)
+			end
+		end
+	end
+	--TESTING
+	for row,t in pairs(iCD.general) do
 		if row == 'row1' or row == 'row2' or row == 'row3' then
 			for k,v in pairs(t) do
 				add(k,v,row)
@@ -1154,6 +1487,9 @@ function iCD:UpdateSkills()
 			if v.showTimeAfterGCD then
 				iCD.frames[row][id].data.showTimeAfterGCD = true
 			end
+			if v.showTimeAfterCast then
+				iCD.frames[row][id].data.showTimeAfterCast = true
+			end
 			if v.glow then
 				local glow = v.glow
 				if type(v.glow) == 'boolean' then
@@ -1176,6 +1512,9 @@ function iCD:UpdateSkills()
 					end
 				end
 			end
+			--if v.customColor then
+			--	iCD.frames[row][id].data.customColor = v.customColor
+			--end
 			iCD.frames[row][id].tex:SetTexture(GetSpellTexture(k))
 			iCD.frames[row][id].tex:SetVertexColor(1,1,1,1)
 			iCD.frames[row][id].data.unMod = 'none'
@@ -1263,10 +1602,13 @@ function iCD.onUpdate()
 		end
 	end
 
+	if iCD.gcd then -- 8.2.5 loading screen fix
+		local gS, gcdD = GetSpellCooldown(iCD.gcd)
+		local gCD = (gS+gcdD-GetTime())/gcdD
+		iCD.GCD:SetValue(gCD)
+	end
+	--[[
 	--- dh stuff
-	local gS, gcdD = GetSpellCooldown(iCD.gcd)
-	local gCD = (gS+gcdD-GetTime())/gcdD
-	iCD.GCD:SetValue(gCD)
 	if iCD.textTimers then
 		local gcdEnd = gS + gcdD
 		local temp = {}
@@ -1300,6 +1642,7 @@ function iCD.onUpdate()
 			iCD.textAnchor:SetWidth(id*40)
 		iCD.textTimers = temp
 	end
+	--]]
 end
 addon:RegisterEvent('PLAYER_LOGIN')
 addon:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
@@ -1310,6 +1653,9 @@ addon:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED')
 addon:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
 addon:RegisterEvent('UNIT_AURA')
 addon:RegisterEvent('PLAYER_TARGET_CHANGED')
+addon:RegisterEvent('AZERITE_EMPOWERED_ITEM_SELECTION_UPDATED')
+addon:RegisterEvent('AZERITE_ESSENCE_CHANGED')
+addon:RegisterEvent('AZERITE_ESSENCE_UPDATE')
 addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_ABSORB_AMOUNT_CHANGED', 'player')
 addon:RegisterUnitEvent('UNIT_HEAL_ABSORB_AMOUNT_CHANGED', 'player')
@@ -1368,6 +1714,7 @@ function addon:PLAYER_LOGIN()
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
 	iCD.spellData = iCD[iCD.class](nil, iCD.specID)
 	iCD.level = UnitLevel('player')
+	UpdateAzeritePowers()
 	--ICDTEST = iCD.spellData
 	iCD:UpdateSkills()
 	iCD:updateBuffList()
@@ -1396,6 +1743,21 @@ function addon:PLAYER_LOGIN()
 		iCD.powerText:SetText('')
 		iCD.powerFunc = nil
 	end
+	local changed = {}
+	if iCD.spellData.spec.customPos then
+		for k,v in pairs(iCD.spellData.spec.customPos) do
+				iCD[k]:ClearAllPoints()
+				iCD[k]:SetPoint(v.from, iCD.hpBar, v.to,v.x,v.y)
+				iCD.positions[k].changed = true
+				changed[k] = true
+		end
+	end
+	for k,v in pairs(iCD.positions) do
+		if v.changed and not changed[k] then
+			v.default(iCD[k])
+			v.changed = false
+		end
+	end
 end
 function addon:PLAYER_SPECIALIZATION_CHANGED()
 	iCD.class = select(2,UnitClass('player'))
@@ -1420,6 +1782,32 @@ function addon:PLAYER_SPECIALIZATION_CHANGED()
 		addon:UnregisterEvent('UNIT_POWER_FREQUENT')
 		iCD.powerText:SetText('')
 		iCD.powerFunc = nil
+	end
+	--[[
+	t.customPos = {
+		buffsI = {
+			from = "CENTER",
+			to = "CENTER",
+			x = 0,
+			y = 0,
+			horizontal = true,
+		},
+	}
+	]]
+	local changed = {}
+	if iCD.spellData.spec.customPos then
+		for k,v in pairs(iCD.spellData.spec.customPos) do
+				iCD[k]:ClearAllPoints()
+				iCD[k]:SetPoint(v.from, iCD.hpBar, v.to,v.x,v.y)
+				iCD.positions[k].changed = true
+				changed[k] = true
+		end
+	end
+	for k,v in pairs(iCD.positions) do
+		if v.changed and not changed[k] then
+			v.default(iCD[k])
+			v.changed = false
+		end
 	end
 	if iCD.specID == 581 then
 		iCD.textTimers = {}
@@ -1470,12 +1858,20 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
 		if event == 'SPELL_AURA_APPLIED' then
 			if spellID == 208052 then -- Sephuz, Prydaz
 				iCD:addToRow4(spellID, false, 30)
+			elseif spellID == 303041 then -- Edicts of the Faithless (Physical)
+				iCD:addToRow4(spellID, false, 40, function() local v = select(5, iCD.UnitBuff('player', "Edict of the Myrmidon", nil, 'player')) if v then return v/1e3, 'P%.0f' else return '' end end)
+			elseif spellID == 303044 then -- Edicts of the Faithless (Magic)
+				iCD:addToRow4(spellID, false, 40, function() local v = select(5, iCD.UnitBuff('player', "Edict of the Sea Witch", nil, 'player')) if v then return v/1e3, 'M%.0f' else return '' end end)
 			elseif spellID == 207472 then
 				iCD:addToRow4(spellID, false, 30, function() local v = select(5, iCD.UnitBuff('player', "Xavaric's Magnum Opus", nil, 'player')) if v then return v/1e3, '%.1f' else return '' end end)
 			end
 		elseif event == 'SPELL_AURA_REFRESH' then
 			if spellID == 207472 then -- Prydaz
 				iCD:addToRow4(spellID, false, 30, function() local v = select(5, iCD.UnitBuff('player', "Xavaric's Magnum Opus", nil, 'player')) if v then return v/1e3, '%.1f' else return '' end end)
+			elseif spellID == 303041 then -- Edicts of the Faithless (Physical)
+				iCD:addToRow4(spellID, false, 40, function() local v = select(5, iCD.UnitBuff('player', "Edict of the Myrmidon", nil, 'player')) if v then return v/1e3, 'P%.0f' else return '' end end)
+			elseif spellID == 303044 then -- Edicts of the Faithless (Magic)
+				iCD:addToRow4(spellID, false, 40, function() local v = select(5, iCD.UnitBuff('player', "Edict of the Sea Witch", nil, 'player')) if v then return v/1e3, 'M%.0f' else return '' end end)
 			end
 		elseif event == 'SPELL_CAST_SUCCESS' then
 			if spellID == 214584 then
@@ -1510,16 +1906,214 @@ function addon:UNIT_AURA(unitID)
 	end
 end
 function addon:PLAYER_EQUIPMENT_CHANGED()
+	UpdateAzeritePowers()
 	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 function addon:UPDATE_SHAPESHIFT_FORM()
 	iCD:UpdateSkills()
 end
+function addon:AZERITE_EMPOWERED_ITEM_SELECTION_UPDATED(arg)
+	UpdateAzeritePowers()
+end
+function addon:AZERITE_ESSENCE_CHANGED()
+	addon:PLAYER_SPECIALIZATION_CHANGED()
+end
+function addon:AZERITE_ESSENCE_UPDATE()
+	addon:PLAYER_SPECIALIZATION_CHANGED()
+end
+--------------------
+---NAMEPLATE-RANGE--
+--------------------
+--[[
+                IRONI_NAMEPLATE_TOT[unitID] = CreateFrame('frame',nil, UIParent)
+                IRONI_NAMEPLATE_TOT[unitID]:SetSize(1,1)
+                IRONI_NAMEPLATE_TOT[unitID]:SetFrameStrata('HIGH')
+                IRONI_NAMEPLATE_TOT[unitID].text = IRONI_NAMEPLATE_TOT[unitID]:CreateFontString()
+                IRONI_NAMEPLATE_TOT[unitID].text:SetFont(LibStub("LibSharedMedia-3.0"):Fetch("font", o.font), o.fontSize, o.outline)
+                IRONI_NAMEPLATE_TOT[unitID].text:SetPoint(o.justify, IRONI_NAMEPLATE_TOT[unitID], o.justify, 0,0)
+                IRONI_NAMEPLATE_TOT[unitID].text:SetJustifyH(o.justify)
+
+	if IsSpellInRange(iCD.outOfRangeSpells.range, 'target') == 0 then
+				if iCD.outOfRange.color == 2 then
+					iCD.outOfRange:SetTextColor(1,0,0)
+					iCD.outOfRange.color = 1
+				end
+			else
+				if iCD.outOfRange.color == 1 then
+					iCD.outOfRange:SetTextColor(1,.5,0)
+					iCD.outOfRange.color = 2
+				end
+			end
+			if IsSpellInRange(iCD.outOfRangeSpells.main, 'target') == 0 then
+IRONI_NAMEPLATE_TOT[unitID].text:SetJustifyH(o.justify)
+end
+local nameplate = C_NamePlate.GetNamePlateForUnit(unitID)
+if not nameplate then return end
+IRONI_NAMEPLATE_TOT[unitID]:ClearAllPoints()
+IRONI_NAMEPLATE_TOT[unitID]:SetPoint(o.anchorPoint, nameplate, o.selfPoint, (o.xOffset or 0),(o.yOffset or 0))
+IRONI_NAMEPLATE_TOT[unitID]:Show()
+IRONI_NAMEPLATE_TOT[unitID].shown = true
+--]]
+do
+	addon:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+	addon:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+	local f = CreateFrame("frame")
+	local rangeItems = {
+		{r = 2, id = 37727}, -- Ruby Acorn
+		{r = 3, id = 42732}, -- Everfrost Razor
+		{r = 4, id = 129055}, -- Shoe Shine Kit
+		{r = 5, id = 8149}, -- Voodoo Charm
+		{r = 7, id = 61323}, -- Ruby Seeds
+		{r = 8, id = 34368}, -- Attuned Crystal Cores
+		{r = 10, id = 32321}, -- Sparrowhawk Net
+		{r = 15, id = 33069}, -- Sturdy Rope
+		{r = 20, id = 10645}, -- Gnomish Death Ray
+		{r = 25, id = 24268}, -- Netherweave Net
+		{r = 30, id = 835}, -- Large Rope Net
+		{r = 35, id = 24269}, -- Heavy Netherweave Net
+		{r = 38, id = 140786}, -- Ley Spider Eggs
+		{r = 40, id = 28767}, -- The Decapitator
+		{r = 45, id = 23836}, -- Goblin Rocket Launcher
+		{r = 50, id = 116139}, -- Haunting Memento
+		{r = 55, id = 74637}, -- Kiryn's Poison Vial
+		{r = 60, id = 32825}, -- Soul Cannon
+		{r = 70, id = 41265}, -- Eyesore Blaster
+		{r = 80, id = 35278}, -- Reinforced Net
+		{r = 90, id = 133925}, -- Fel Lash
+		{r = 100, id = 33119}, -- Malister's Frost Wand
+		{r = 150, id = 46954}, -- Flaming Spears
+		{r = 200, id = 75208}, -- Rancher's Lariat
+	}
+	local nps = {}
+	local frames = {}
+	local function getString(unitID)
+		frames[unitID] = CreateFrame('frame',nil, UIParent)
+		frames[unitID]:SetSize(1,1)
+		frames[unitID]:SetFrameStrata('HIGH')
+		frames[unitID].text = frames[unitID]:CreateFontString()
+		frames[unitID].text:SetFont(iCD.font, 16, 'OUTLINE')
+		frames[unitID].text:SetPoint("left", frames[unitID], "right", 0,0)
+		frames[unitID].text:SetJustifyH("left")
+		frames[unitID].text:SetText("")
+		return frames[unitID]
+	end
+	local rangeColors = {
+		{r = 1, g = 0, b = 0}, -- oor
+		{r = 1, g = .5, b = 0}, -- utility
+		{r = 1, g = 1, b = 1}, -- in main dps range
+	}
+	function iCD:GetRange(unitID)
+		local rangeID = 1
+		if IsSpellInRange(iCD.outOfRangeSpells.main, unitID) == 1 then  -- is in range for main dps skill
+			rangeID = 3
+		elseif IsSpellInRange(iCD.outOfRangeSpells.range, unitID) == 1 then -- in Utility range
+			rangeID = 2
+		end
+		local range = 0
+		local lastRange = 0
+		for _,v in ipairs(rangeItems) do
+			if not IsItemInRange(v.id, unitID) then
+				range = v.r
+			else
+				lastRange = v.r
+				break
+			end
+		end
+		return rangeID, rangeColors[rangeID], range, lastRange
+	end
+	local function updateNameplate(unitID)
+		if not nps[unitID] then print("error: no nameplate for", unitID) return end
+		if not nps[unitID].icdString then
+			nps[unitID].icdString = getString(unitID)
+			nps[unitID].icdString:ClearAllPoints()
+			nps[unitID].icdString:SetPoint("LEFT", nps[unitID], "RIGHT", -5,0)
+		end
+		nps[unitID].icdString:Show()
+		local rangeID, rangeColor, range = iCD:GetRange(unitID)
+		if nps[unitID].icdString.currentColor ~= rangeID then
+			nps[unitID].icdString.text:SetTextColor(rangeColor.r, rangeColor.g, rangeColor.b)
+			nps[unitID].icdString.currentColor = rangeID
+		end
+		if nps[unitID].icdString.currentRange ~= range then
+			nps[unitID].icdString.currentRange = range
+			if range == 0 then
+				nps[unitID].icdString.text:SetText("")
+			else
+				nps[unitID].icdString.text:SetText(string.format("%d+", range))
+			end
+		end
+	end
+	local lastUpdate = 0
+	local function npOnUpdate(f)
+		local t = GetTime()
+		if t < lastUpdate + .1 then return end
+		lastUpdate = t
+		for k,v in pairs(nps) do
+			if v then updateNameplate(k) end
+		end
+	end
+
+	function addon:NAME_PLATE_UNIT_ADDED(unitID)
+		local np = C_NamePlate.GetNamePlateForUnit(unitID)
+		if np then
+			nps[unitID] = np
+
+		end
+	end
+	function addon:NAME_PLATE_UNIT_REMOVED(unitID)
+		if nps[unitID].icdString then
+			nps[unitID].icdString:Hide()
+		end
+		nps[unitID] = false
+	end
+	f:SetScript("OnUpdate", npOnUpdate)
+end
+
+
+
+
+
+
+
+
+---------------------------
+---END-OF-NAMEPLATE-RANGE--
+---------------------------
+
+
 function ICDTEST()
 	return iCD.onCD
 end
 iCD.row1:SetScript('OnUpdate', iCD.onUpdate)
 
+SLASH_ICD1 = "/icd"
+SLASH_ICD2 = '/icooldowns'
+SlashCmdList["ICD"] = function(msg)
+	if msg then
+		msg = string.lower(msg)
+	end
+	if msg == "force" or msg == "f" then
+		UpdateAzeritePowers()
+		addon:PLAYER_SPECIALIZATION_CHANGED()
+		if IroniStreamIconsUpdate then IroniStreamIconsUpdate() else print("Error: Addon isn't enabled") end
+		return
+	end
+	for k in pairs(currentAzeritePowers) do
+		local azeriteInfo = C_AzeriteEmpoweredItem.GetPowerInfo(k)
+		local spellName = Spell:CreateFromSpellID(azeriteInfo.spellID):GetSpellName()
+		print(spellName, k)
+	end
+	print("Essences:")
+	for k,v in pairs (C_AzeriteEssence.GetMilestones()) do
+		if v.slot then
+			local id = C_AzeriteEssence.GetMilestoneEssence(v.ID)
+			if id then
+				local essence = C_AzeriteEssence.GetEssenceInfo(id)
+				print(essence.name, id, "("..essence.rank..")")
+			end
+		end
+	end
+end
 --[=[
 function IANTORUS()
 	local s = ''
