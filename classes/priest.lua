@@ -73,7 +73,7 @@ function iCD:PRIEST(specID)
 		}
 		t.row2 = {
 			[62618] = { -- Power Word: Barrier
-				order = 7,
+				order = 5,
 				cost = true,
 			},
 			[47536] = { -- Rapture
@@ -82,24 +82,35 @@ function iCD:PRIEST(specID)
 			},
 
 			[34433] = { -- Shadowfiend
-				order = 9,
+				order = 4,
 				showFunc = function()
 					return not select(4, GetTalentInfo(3, 2, 1))
 				end,
 			},
 			[123040] = { -- Mindbender
-				order = 9,
+				order = 4,
 				range = true,
 				showFunc = function()
 					return select(4, GetTalentInfo(3, 2, 1))
 				end,
+			},
+			[19236] = { -- Desperate Prayer
+				order = 2,
+				ignoreGCD = true,
 			},
 			[586] = { -- Fade
 				order = 20,
 				ignoreGCD = true,
 			},
 			[33206] = { -- Pain Suppression
-				order = 10,
+				order = 7,
+			},
+			[246287] = { -- Evangelism
+				order = 9,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 3, 1))
+				end,
 			},
 		}
 		t.row3 = {
@@ -128,6 +139,7 @@ function iCD:PRIEST(specID)
 					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 			},
+			[47536] = {}, -- Rapture
 		}
 	elseif specID == 257 then --Holy
 		iCD.outOfRangeSpells = {

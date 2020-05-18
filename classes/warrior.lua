@@ -449,6 +449,7 @@ function iCD:WARRIOR(specID)
 				cost = true,
 				glow = true,
 				glowSound = 'text1',
+				level = 22,
 				stack = true,
 				stackFunc = function()
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Revenge!')
@@ -485,6 +486,7 @@ function iCD:WARRIOR(specID)
 				order = 8,
 				row = 1,
 				showTimeAfterGCD = true,
+				level = 50,
 			},
 			[107570] = { -- Stormbolt
 				order = 9,
@@ -515,27 +517,34 @@ function iCD:WARRIOR(specID)
 		t.row2 = {
 			[1160] = { -- Demoralizing Shout
 				order = 4,
+				level = 48,
 			},
 			[12975] = { -- Last Stand
 				order = 5,
 				ignoreGCD = true,
+				level = 32,
 			},
 			[871] = { -- Shield Wall
 				order = 7,
 				ignoreGCD = true,
+				level = 55,
 			},
 			[23920] = { -- Spell Reflection
 				order = 9,
 				ignoreGCD = true,
+				level = 70,
 			},
 			[107574] = { -- Avatar
 				order = 10,
+				level = 40,
 			},
 			[5246] = {  -- Intimidating Shout
 				order = 13,
+				level = 70,
 			},
 			[97462] = { -- Rallying Cry
 				order = 15,
+				level = 80,
 			},
 		}
 		t.row3 = {
@@ -562,6 +571,7 @@ function iCD:WARRIOR(specID)
 				order = 1,
 				cost = true,
 				stack = true,
+				level = 36,
 				stackFunc = function()
 					local v = select(5, iCD.UnitBuff('player', 'Ignore Pain'))
 					if v then
@@ -586,7 +596,9 @@ function iCD:WARRIOR(specID)
 			},
 		}
 		t.row4 = {
-			[18499] = {}, -- Berserker Rage
+			[18499] = {
+				level = 44,
+			}, -- Berserker Rage
 			--[198304] = {}, -- Intercept
 			[355] = {  -- Taunt
 				ignoreGCD = true,
@@ -594,10 +606,12 @@ function iCD:WARRIOR(specID)
 			[198304] = { -- Intercept
 				stack = true,
 				charges = true,
+				level = 28,
 			},
 			[6544] = { -- Heroic Leap
 				charges = IsEquippedItem(143728),
 				stack = IsEquippedItem(143728),
+				level = 26,
 			},
 		}
 		t.row5 = {

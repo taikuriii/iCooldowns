@@ -1651,6 +1651,8 @@ addon:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE')
 addon:RegisterEvent('SPELL_UPDATE_COOLDOWN')
 addon:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED')
 addon:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
+addon:RegisterEvent('PLAYER_LEVEL_CHANGED')
+addon:RegisterEvent('PLAYER_LEVEL_UP')
 addon:RegisterEvent('UNIT_AURA')
 addon:RegisterEvent('PLAYER_TARGET_CHANGED')
 addon:RegisterEvent('AZERITE_EMPOWERED_ITEM_SELECTION_UPDATED')
@@ -1919,6 +1921,12 @@ function addon:AZERITE_ESSENCE_CHANGED()
 	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 function addon:AZERITE_ESSENCE_UPDATE()
+	addon:PLAYER_SPECIALIZATION_CHANGED()
+end
+function addon:PLAYER_LEVEL_CHANGED()
+	addon:PLAYER_SPECIALIZATION_CHANGED()
+end
+function addon:PLAYER_LEVEL_UP()
 	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 --------------------

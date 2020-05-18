@@ -201,6 +201,7 @@ function iCD:DEATHKNIGHT(specID)
 				end,
 				debuff = true,
 			},
+			[48265] = {}, -- Death's Advance
 			--[188290] = {}, -- Death and Decay
 			[77535] = { -- Blood Shield
 				stack = true,

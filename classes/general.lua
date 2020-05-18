@@ -207,6 +207,12 @@ function iCD:GetGenerals(specID)
 					return race == 'BloodElf'
 				end,
 			},
+			[312411] = { -- Bag of tricks
+				showFunc = function()
+					local _, race = UnitRace('player')
+					return race == 'Vulpera'
+				end,
+			},
 			[232633] = { -- Arcane Torrent ( Insanity )
 				showFunc = function()
 					local _, race = UnitRace('player')
@@ -279,6 +285,7 @@ function iCD:GetGenerals(specID)
 			[-174103] = {}, -- Manifesto of Madness
 			[-168989] = {}, -- Hyperthread Wristwraps
 			[-172666] = {}, -- Corrupted Gladiator's Medallion
+			[-173944] = {}, -- Forbidden Obsidian Claw
 		}
 		t.row5 = { -- Buffs
 			[1022] = {}, -- Blessing of Protection
