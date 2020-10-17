@@ -116,7 +116,7 @@ function iCD:PRIEST(specID)
 		t.row3 = {
 		}
 		t.row4 = {
-
+			[8122] = {}, -- Psychis Scream
 			[528] = {}, -- Dispel Magic
 			[213634] = {}, -- Purify Disease
 			[32375] = {}, -- Mass Dispel

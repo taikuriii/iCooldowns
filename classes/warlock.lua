@@ -372,8 +372,8 @@ function iCD:WARLOCK(specID)
 	elseif specID == 267 then --Destruction
 				--gcd = 162243, -- Demon's Bite
 				iCD.outOfRangeSpells = {
-					main = 'Incinerate',
-					range = 'Incinerate',
+					main = 'Immolate',
+					range = 'Immolate',
 				}
 				t.power = {
 					pos = {
@@ -385,42 +385,70 @@ function iCD:WARLOCK(specID)
 					end,
 				}
 				t.row1 = {
-					[196586] = { -- Dimensional Rift
-						order = 2,
-						range = true,
-						stack = true,
-						charges = true,
-					},
-					[17962] = { -- Conmflagrate
+					[17962] = { -- Conflagrate
 						order = 5,
 						range = true,
 						stack = true,
 						charges = true,
+						showTimeAfterCast = true,
 					},
 					[80240] = { -- Havoc
 						order = 7,
 						range = true,
 						cost = true,
+						showTimeAfterCast = true,
 					},
-				}
-				t.row2 = {
-					[196098] = { -- Soul Harvest
-						order = 3,
+					[152108] = { -- Cataclysm
+						order = 2,
 						showFunc = function()
 							return select(4, GetTalentInfo(4, 3, 1))
 						end,
-						ignoreGCD = true,
+						showTimeAfterCast = true,
+					}
+				}
+				t.row2 = {
+					[1122] = { -- Summon Infernal
+						order = 1,
+					},
+					[113858] = { -- Dark Soul: Instability
+						order = 3,
+						showFunc = function()
+							return select(4, GetTalentInfo(7,3,1))
+						end,
 					},
 					[104773] = { -- Unending Resolve
 						order = 5,
 						ignoreGCD = true,
 					},
+					[6789] = { -- Mortal Coil
+						order = 5,
+						showFunc = function()
+							return select(4, GetTalentInfo(5, 2, 1))
+						end,
+					},
 				}
 				t.row3 = {
+					[157736] = { -- Immolate
+						order = 3,
+						customText = function()
+							local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('Immolate')
+							if expirationTime then
+								if duration == 0 then return "+" end
+								local dura = expirationTime - GetTime()
+								if dura > 5 then
+									return dura, '%.0f'
+								else
+									return dura, '|cffff1a1a%.1f'
+								end
+							else
+								return ''
+							end
+						end,
+					},
 				}
 				t.row4 = {
-
 					[111771] = {}, -- Demonic Gateway
+					[30283] = {}, -- Shadowfury
 					[6789] = { -- Mortal Coil
 						showFunc = function()
 							return select(4, GetTalentInfo(3,2,1))
@@ -428,23 +456,16 @@ function iCD:WARLOCK(specID)
 					},
 				}
 				t.buffsC = {
-					[196098] = { -- Soul Harvest
-						showFunc = function()
-							local talent = select(4, GetTalentInfo(4, 3, 1))
-							local chest = IsEquippedItem(151821)
-							if talent or chest then return true else return false end
-						end,
-					},
-					[235156] = { -- Empowered Life Tap
-						showFunc = function()
-							return select(4, GetTalentInfo(2,3,1))
-						end,
-						stack = "+D",
-					}
 				}
 				t.buffsI = {
-					[157736] = { -- Immolate
-						debuff = true,
+					[117828] = { -- Backdraft
+						stack = true,
+					},
+					[266091] = { -- Grimoire of Supremacy
+						stack = true,
+					},
+					[279673] = { -- Chaotic Inferno (azerite)
+						azerite = 432,
 					},
 				}
 	end

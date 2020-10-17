@@ -703,7 +703,11 @@ function iCD:DRUID(specID)
 					return select(4, GetTalentInfo(2, 3, 1))
 				end,
 			},
-
+			[102359] = { -- Mass Entanglement
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 2, 1))
+				end,
+			},
 		}
 		t.row5 = {
 			[22812] = {}, -- Barkskin

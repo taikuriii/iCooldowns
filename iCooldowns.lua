@@ -1,30 +1,6 @@
 local _, iCD = ...
 --options---------
-iCD.font = 'Interface\\AddOns\\iMedia\\ap.ttf'
-iCD.fontSize = 14
-local sounds = {
-	default = 'Interface\\AddOns\\iCooldowns\\Media\\Kachink.ogg',
-	text1 = 'Interface\\AddOns\\iCooldowns\\Media\\Text1.ogg',
-	text2 = 'Interface\\AddOns\\iCooldowns\\Media\\Text2.ogg',
-}
-iCD.rowSizes = {
-	['row1'] = 20,
-	['row2'] = 20,
-	['row3'] = 20,
-	['row4'] = 24,
-	['row5'] = 32,
-	['buffsI'] = 20,
-	['buffsC'] = 20,
-}
-iCD.direction = { -- horizontal = true
-	['row1'] = true,
-	['row2'] = true,
-	['row3'] = true,
-	['row4'] = true,
-	['row5'] = false,
-	['buffsI'] = true,
-	['buffsC'] = true,
-}
+local sounds = iCD.sounds
 --end-of-options--
 iCD.colors = {
 	['green'] = '|cff00ff00',
@@ -129,26 +105,57 @@ function iCD:Essences(essenceID, major, minRank)
 		return minRank and (iCD.currentEssences.minor[essenceID] and iCD.currentEssences.minor[essenceID] >= minRank) or iCD.currentEssences.minor[essenceID]
 	end
 end
+local _auras = {
+	playerBuffs = {},
+	targetDebuffs = {},
+	petBuffs = {},
+}
 --isSelected = C_AzeriteEmpoweredItem.IsPowerSelected(itemLocation, powerid)
-function iCD.UnitBuff(target,buffName)
-	for i = 1, 41 do -- Buffs
-		local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID,canApplyAura,isBossDebuff,nameplateShowAll,timeMod,value1,value2,value3 = UnitBuff(target, i)
-		if name == nil then
-			return
-		elseif buffName == name then
-			return count, duration, expirationTime, value1, value2, value3
+function iCD.UnitBuff(target,buffName,castByPlayer)
+	if target:lower() == "player" then
+		for k,v in pairs(_auras.playerBuffs) do
+			if v[1] == buffName then
+				if not castByPlayer or (castByPlayer and v[13]) then
+					return v[3], v[5], v[6], v[16], v[17], v[18]
+				end
+			end
+		end
+	elseif target:lower() == "pet" then
+		for k,v in pairs(_auras.petBuffs) do
+			if v[1] == buffName then
+				if not castByPlayer or (castByPlayer and v[13]) then
+					return v[3], v[5], v[6], v[16], v[17], v[18]
+				end
+			end
+		end
+	else
+		for i = 1, 129 do -- Buffs
+			local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID,canApplyAura,isBossDebuff, castByPlayer, nameplateShowAll,timeMod,value1,value2,value3 = UnitBuff(target, i, castByPlayer and "player")
+		if not name then return end
+			if buffName == name then
+				return count, duration, expirationTime, value1, value2, value3
+			end
 		end
 	end
 	return
 end
 
-function iCD.UnitDebuff(buffName, target)
-	for i = 1, 41 do -- Debuffs
-		local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID,canApplyAura,isBossDebuff,nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, 'player')
-		if name == nil then
-			return nil, nil, nil
-		elseif buffName == name then
-			return count, duration, expirationTime, value1, value2, value3
+function iCD.UnitDebuff(buffName, target, castByPlayer)
+	if not target or target:lower() == "target" then
+		for k,v in pairs(_auras.targetDebuffs) do
+			if v[1] == buffName then
+				if not castByPlayer or (castByPlayer and v[13]) then
+					return v[3], v[5], v[6], v[16], v[17], v[18]
+				end
+			end
+		end
+	else
+		for i = 1, 129 do -- Debuffs
+			local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID,canApplyAura,isBossDebuff, castByPlayer, nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, castByPlayer and 'player')
+			if not name then return end
+			if buffName == name then
+				return count, duration, expirationTime, value1, value2, value3
+			end
 		end
 	end
 	return
@@ -229,166 +236,169 @@ addon:SetScript("OnEvent", function(self, event, ...)
 end)
 iCD.customSpellTimers = {}
 --Health bar
-iCD.hpBar = CreateFrame('Statusbar', 'iCD_Health', UIParent)
-iCD.hpBar:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
-iCD.hpBar:SetWidth(220)
-iCD.hpBar:SetHeight(16)
-iCD.hpBar:SetStatusBarColor(0.1,0.1,0.1,1)
-iCD.hpBar:SetMinMaxValues(0,1)
-iCD.hpBar:SetValue(0)
-iCD.hpBar:SetPoint('TOP', UIParent, 'CENTER', -960,-150)
+do
+	local c = iCD.setups.hpBar
+	iCD.hpBar = CreateFrame('Statusbar', 'iCD_Health', UIParent)
+	iCD.hpBar:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
+	iCD.hpBar:SetWidth(c.width)
+	iCD.hpBar:SetHeight(c.height)
+	iCD.hpBar:SetStatusBarColor(c.defaultColor[1], c.defaultColor[2],	c.defaultColor[3], c.defaultColor[4])
+	iCD.hpBar:SetMinMaxValues(0,1)
+	iCD.hpBar:SetValue(0)
+	iCD.hpBar:SetPoint(c.position.from, UIParent, c.position.to, c.position.x,c.position.y)
 
-iCD.hpBar.bg = CreateFrame('frame', nil, iCD.hpBar)
-iCD.hpBar.bg:SetWidth(220)
-iCD.hpBar.bg:SetHeight(16)
-iCD.hpBar.bg:SetPoint('CENTER', iCD.hpBar, 'CENTER',0,0)
-iCD.hpBar.bg:SetBackdrop(iCD.barBD)
-iCD.hpBar.bg:SetBackdropBorderColor(0,0,0,1)
-iCD.hpBar.bg:SetBackdropColor(0,0,0,0)
+	iCD.hpBar.bg = CreateFrame('frame', nil, iCD.hpBar, "BackdropTemplate")
+	iCD.hpBar.bg:SetWidth(c.width)
+	iCD.hpBar.bg:SetHeight(c.height)
+	iCD.hpBar.bg:SetPoint('CENTER', iCD.hpBar, 'CENTER',0,0)
+	iCD.hpBar.bg:SetBackdrop(iCD.barBD)
+	iCD.hpBar.bg:SetBackdropBorderColor(0,0,0,1)
+	iCD.hpBar.bg:SetBackdropColor(0,0,0,0)
 
-iCD.hpBar.flash = iCD.hpBar:CreateAnimationGroup()
-iCD.hpBar.flash:SetLooping('REPEAT')
-iCD.hpBar.flash:HookScript('OnPlay', function()
-	iCD.hpBar.anim = true
-end)
-iCD.hpBar.flash:HookScript('OnStop', function()
-	iCD.hpBar.anim = false
-end)
-iCD.hpBar.fadeOut = iCD.hpBar.flash:CreateAnimation('Alpha')
-iCD.hpBar.fadeOut:SetDuration(0.15)
-iCD.hpBar.fadeOut:SetFromAlpha(1)
-iCD.hpBar.fadeOut:SetToAlpha(0)
-iCD.hpBar.fadeOut:SetOrder(1)
+	iCD.hpBar.flash = iCD.hpBar:CreateAnimationGroup()
+	iCD.hpBar.flash:SetLooping('REPEAT')
+	iCD.hpBar.flash:HookScript('OnPlay', function()
+		iCD.hpBar.anim = true
+	end)
+	iCD.hpBar.flash:HookScript('OnStop', function()
+		iCD.hpBar.anim = false
+	end)
+	iCD.hpBar.fadeOut = iCD.hpBar.flash:CreateAnimation('Alpha')
+	iCD.hpBar.fadeOut:SetDuration(0.15)
+	iCD.hpBar.fadeOut:SetFromAlpha(1)
+	iCD.hpBar.fadeOut:SetToAlpha(0)
+	iCD.hpBar.fadeOut:SetOrder(1)
 
-iCD.hpBar.fadeIn = iCD.hpBar.flash:CreateAnimation('Alpha')
-iCD.hpBar.fadeIn:SetDuration(0.15)
-iCD.hpBar.fadeIn:SetFromAlpha(0)
-iCD.hpBar.fadeIn:SetToAlpha(1)
-iCD.hpBar.fadeIn:SetOrder(2)
-
+	iCD.hpBar.fadeIn = iCD.hpBar.flash:CreateAnimation('Alpha')
+	iCD.hpBar.fadeIn:SetDuration(0.15)
+	iCD.hpBar.fadeIn:SetFromAlpha(0)
+	iCD.hpBar.fadeIn:SetToAlpha(1)
+	iCD.hpBar.fadeIn:SetOrder(2)
+end
 --EH text
-iCD.EHtext = iCD.hpBar:CreateFontString()
-iCD.EHtext:SetFont(iCD.font, 16, 'OUTLINE')
-iCD.EHtext:SetPoint('BOTTOM', iCD.hpBar, 'TOP', 0,115)
-iCD.EHtext:SetText('')
-
+do
+	local c = iCD.setups.ehText
+	iCD.EHtext = iCD.hpBar:CreateFontString()
+	iCD.EHtext:SetFont(iCD.font, c.fontSize, 'OUTLINE')
+	iCD.EHtext:SetPoint(c.position.from, iCD.hpBar, c.position.to, c.position.x,c.position.y)
+	iCD.EHtext:SetText('')
+end
+local function setupFrame(f,n)
+	local c = iCD.setups[n]
+	if not c then print("iCD: ERROR - no setup found for :", n) return end
+	f:ClearAllPoints()
+	f:SetPoint(c.position.from, iCD.hpBar, c.position.to, c.position.x, c.position.y)
+end
 iCD.positions = {
-	['row1'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,63) end, changed = false},
-	['row2'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,42) end, changed = false},
-	['row3'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'TOP',-25,115) end, changed = false},
-	['row4'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,17) end, changed = false},
-	['row5'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'BOTTOMLEFT',0,100) end, changed = false},
-	['buffsI'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOMLEFT', iCD.hpBar, 'TOP',25,115) end, changed = false},
-	['buffsC'] = {default = function(f) f:ClearAllPoints() f:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,88) end, changed = false},
+	row1 = {default = function(f) setupFrame(f, "row1") end, changed = false},
+	row2 = {default = function(f) setupFrame(f, "row2") end, changed = false},
+	row3 = {default = function(f) setupFrame(f, "row3") end, changed = false},
+	row4 = {default = function(f) setupFrame(f, "row4") end, changed = false},
+	row5 = {default = function(f) setupFrame(f, "row5") end, changed = false},
+	buffsI = {default = function(f) setupFrame(f, "buffsI") end, changed = false},
+	buffsC = {default = function(f) setupFrame(f, "buffsC") end, changed = false},
 }
-
 --row1
 iCD.row1 = CreateFrame('frame', nil, UIParent)
-iCD.row1:SetSize(100,20)
---iCD.row1:SetBackdrop(iCD.backdrop)
---iCD.row1:SetBackdropBorderColor(0,0,0,1)
---iCD.row1:SetBackdropColor(0.2,0.2,0.2,0.5)
---iCD.row1:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,63)
-iCD.positions["row1"].default(iCD.row1)
+iCD.row1:SetSize(20,20)
+iCD.positions.row1.default(iCD.row1)
 --row2
 iCD.row2 = CreateFrame('frame', nil, UIParent)
-iCD.row2:SetSize(100,20)
---iCD.row2:SetBackdrop(iCD.backdrop)
---iCD.row2:SetBackdropBorderColor(0,0,0,1)
---iCD.row2:SetBackdropColor(0.2,0.2,0.2,0.5)
---iCD.row2:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,42)
-iCD.positions["row2"].default(iCD.row2)
+iCD.row2:SetSize(20,20)
+iCD.positions.row2.default(iCD.row2)
 -- Row 3
 iCD.row3 = CreateFrame('frame', nil, UIParent)
-iCD.row3:SetSize(100,20)
---iCD.row3:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'TOP',-25,115)
-iCD.positions["row3"].default(iCD.row3)
+iCD.row3:SetSize(20,20)
+iCD.positions.row3.default(iCD.row3)
 -- Row 4 (only on cd)
 iCD.row4 = CreateFrame('frame', nil, UIParent)
-iCD.row4:SetSize(iCD.rowSizes.row4,iCD.rowSizes.row4)
---iCD.row4:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,17)
-iCD.positions["row4"].default(iCD.row4)
+iCD.row4:SetSize(20,20)
+iCD.positions.row4.default(iCD.row4)
 -- Row 5 Big Buffs
 iCD.row5 = CreateFrame('frame', nil, UIParent)
-iCD.row5:SetSize(iCD.rowSizes.row5,iCD.rowSizes.row5)
---iCD.row5:SetPoint('BOTTOMRIGHT', iCD.hpBar, 'BOTTOMLEFT',0,100)
-iCD.positions["row5"].default(iCD.row5)
+iCD.row5:SetSize(20,20)
+iCD.positions.row5.default(iCD.row5)
 
 -- Buffs (Important)
 iCD.buffsI = CreateFrame('frame', nil, UIParent)
-iCD.buffsI:SetSize(iCD.rowSizes.buffsI,iCD.rowSizes.buffsI)
---iCD.buffsI:SetPoint('BOTTOMLEFT', iCD.hpBar, 'TOP',25,115)
-iCD.positions["buffsI"].default(iCD.buffsI)
+iCD.buffsI:SetSize(20,20)
+iCD.positions.buffsI.default(iCD.buffsI)
 
 -- Buffs (center)
 iCD.buffsC = CreateFrame('frame', nil, UIParent)
-iCD.buffsC:SetSize(iCD.rowSizes.buffsC,iCD.rowSizes.buffsC)
---iCD.buffsC:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,88)
-iCD.positions["buffsC"].default(iCD.buffsC)
+iCD.buffsC:SetSize(20,20)
+iCD.positions.buffsC.default(iCD.buffsC)
 
 -- GCD
-iCD.GCD = CreateFrame('Statusbar', nil, UIParent)
-iCD.GCD:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
-iCD.GCD:SetWidth(109)
-iCD.GCD:SetHeight(11)
-iCD.GCD:SetStatusBarColor(1,0.5,0,1)
-iCD.GCD:SetMinMaxValues(0,1)
-iCD.GCD:SetValue(0)
-iCD.GCD:SetPoint('TOPLEFT', iCD.hpBar, 'BOTTOMLEFT', 0,-1)
+do
+	local c = iCD.setups.gcd
+	iCD.GCD = CreateFrame('Statusbar', nil, UIParent)
+	iCD.GCD:SetStatusBarTexture('Interface\\Buttons\\WHITE8x8')
+	iCD.GCD:SetWidth(c.width)
+	iCD.GCD:SetHeight(c.height)
+	iCD.GCD:SetStatusBarColor(c.defaultColor[1], c.defaultColor[2], c.defaultColor[3], c.defaultColor[4])
+	iCD.GCD:SetMinMaxValues(0,1)
+	iCD.GCD:SetValue(0)
+	iCD.GCD:SetPoint(c.position.from, iCD.hpBar, c.position.to, c.position.x, c.position.y)
 
-iCD.GCD.bg = CreateFrame('frame', nil, iCD.GCD)
-iCD.GCD.bg:SetWidth(109)
-iCD.GCD.bg:SetHeight(11)
-iCD.GCD.bg:SetPoint('CENTER', iCD.GCD, 'CENTER',0,0)
-iCD.GCD.bg:SetBackdrop(iCD.barBD)
-iCD.GCD.bg:SetBackdropBorderColor(0,0,0,1)
-iCD.GCD.bg:SetBackdropColor(0,0,0,0)
-
+	iCD.GCD.bg = CreateFrame('frame', nil, iCD.GCD, "BackdropTemplate")
+	iCD.GCD.bg:SetWidth(c.width)
+	iCD.GCD.bg:SetHeight(c.height)
+	iCD.GCD.bg:SetPoint('CENTER', iCD.GCD, 'CENTER',0,0)
+	iCD.GCD.bg:SetBackdrop(iCD.barBD)
+	iCD.GCD.bg:SetBackdropBorderColor(0,0,0,1)
+	iCD.GCD.bg:SetBackdropColor(0,0,0,0)
+end
 -- Anchor for texts above health bar
 iCD.textAnchor = CreateFrame('frame', nil, UIParent)
 iCD.textAnchor:SetSize(40,20)
 iCD.textAnchor:SetPoint('BOTTOM', iCD.hpBar, 'TOP',0,2)
 
 -- Power Text
-iCD.powerText = iCD.GCD:CreateFontString('iCD_powerText')
-iCD.powerText:SetFont(iCD.font, 16, 'OUTLINE')
-iCD.powerText:SetJustifyH('RIGHT')
-iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -1080, -150)
-iCD.powerText:SetText('')
+do
+	local c = iCD.setups.power
+	iCD.powerText = iCD.GCD:CreateFontString('iCD_powerText')
+	iCD.powerText:SetFont(iCD.font, c.fontSize, 'OUTLINE')
+	iCD.powerText:SetJustifyH(c.justifyH)
+	iCD.powerText:SetPoint(c.position.from, UIParent, c.position.to, c.position.x, c.position.y)
+	iCD.powerText:SetText('')
+end
 
 -- Out of range warning
-iCD.outOfRangeFrame = CreateFrame('frame', nil, UIParent)
-iCD.outOfRange = iCD.outOfRangeFrame:CreateFontString('iCD_outOfRange')
-iCD.outOfRange:SetFont(iCD.font, 32, 'OUTLINE')
-iCD.outOfRange:SetJustifyH('CENTER')
-iCD.outOfRange:SetPoint('CENTER', UIParent, 'CENTER', -960, 70)
-iCD.outOfRange:SetText('OUT OF RANGE')
-iCD.outOfRange:SetTextColor(1,0,0)
-iCD.outOfRange:Hide()
-iCD.outOfRange.color = 1 -- red
+do
+	local c = iCD.setups.outOfRange
+	iCD.outOfRangeFrame = CreateFrame('frame', nil, UIParent)
+	iCD.outOfRange = iCD.outOfRangeFrame:CreateFontString('iCD_outOfRange')
+	iCD.outOfRange:SetFont(iCD.font, c.fontSize, 'OUTLINE')
+	iCD.outOfRange:SetJustifyH(c.justifyH)
+	iCD.outOfRange:SetPoint(c.position.from, UIParent, c.position.to, c.position.x, c.position.y)
+	iCD.outOfRange:SetText(c.text)
+	iCD.outOfRange:SetTextColor(1,0,0)
+	iCD.outOfRange:Hide()
+	iCD.outOfRange.color = 1 -- red
 
-iCD.outOfRange.flash = iCD.outOfRange:CreateAnimationGroup()
-iCD.outOfRange.flash:SetLooping('REPEAT')
-iCD.outOfRange.flash:HookScript('OnPlay', function()
-	iCD.outOfRange.anim = true
-	--iCD.outOfRange:Show()
-end)
-iCD.outOfRange.flash:HookScript('OnStop', function()
-	iCD.outOfRange.anim = false
---	iCD.outOfRange:Hide()
-end)
-iCD.outOfRange.fadeOut = iCD.outOfRange.flash:CreateAnimation('Alpha')
-iCD.outOfRange.fadeOut:SetDuration(.25)
-iCD.outOfRange.fadeOut:SetFromAlpha(1)
-iCD.outOfRange.fadeOut:SetToAlpha(0)
-iCD.outOfRange.fadeOut:SetOrder(1)
+	iCD.outOfRange.flash = iCD.outOfRange:CreateAnimationGroup()
+	iCD.outOfRange.flash:SetLooping('REPEAT')
+	iCD.outOfRange.flash:HookScript('OnPlay', function()
+		iCD.outOfRange.anim = true
+		--iCD.outOfRange:Show()
+	end)
+	iCD.outOfRange.flash:HookScript('OnStop', function()
+		iCD.outOfRange.anim = false
+	--	iCD.outOfRange:Hide()
+	end)
+	iCD.outOfRange.fadeOut = iCD.outOfRange.flash:CreateAnimation('Alpha')
+	iCD.outOfRange.fadeOut:SetDuration(.25)
+	iCD.outOfRange.fadeOut:SetFromAlpha(1)
+	iCD.outOfRange.fadeOut:SetToAlpha(0)
+	iCD.outOfRange.fadeOut:SetOrder(1)
 
-iCD.outOfRange.fadeIn = iCD.outOfRange.flash:CreateAnimation('Alpha')
-iCD.outOfRange.fadeIn:SetDuration(.25)
-iCD.outOfRange.fadeIn:SetFromAlpha(0)
-iCD.outOfRange.fadeIn:SetToAlpha(1)
-iCD.outOfRange.fadeIn:SetOrder(2)
-
+	iCD.outOfRange.fadeIn = iCD.outOfRange.flash:CreateAnimation('Alpha')
+	iCD.outOfRange.fadeIn:SetDuration(.25)
+	iCD.outOfRange.fadeIn:SetFromAlpha(0)
+	iCD.outOfRange.fadeIn:SetToAlpha(1)
+	iCD.outOfRange.fadeIn:SetOrder(2)
+end
 iCD.frames = {
 	row1 = {},
 	row2 = {},
@@ -421,7 +431,7 @@ function iCD:checkRange(force)
 			end
 			if iCD.outOfRange.currentRange ~= range then
 				iCD.outOfRange.currentRange = range
-				iCD.outOfRange:SetText(string.format("%d-%d\nOUT OF RANGE", range, lastRange))
+				iCD.outOfRange:SetText(string.format("%d-%d\n%s", range, lastRange, iCD.setups.outOfRange.text))
 			end
 		elseif iCD.outOfRange.anim then
 			iCD.outOfRange.flash:Stop()
@@ -772,14 +782,15 @@ function iCD:CreateNewFrame(id, row)
 		iCD.frames[row][id]:SetAlpha(1)
 		return
 	end
-	iCD.frames[row][id] = CreateFrame('frame',nil,iCD[row])
-	iCD.frames[row][id]:SetSize(iCD.rowSizes[row],iCD.rowSizes[row])
+	local c = iCD.setups[row]
+	iCD.frames[row][id] = CreateFrame('frame',nil,iCD[row], "BackdropTemplate")
+	iCD.frames[row][id]:SetSize(c.size,c.size)
 	--Backdrop
 	iCD.frames[row][id]:SetBackdrop(iCD.backdrop)
 	iCD.frames[row][id]:SetBackdropColor(0.2,0.2,0.2,0.5)
 	iCD.frames[row][id]:SetBackdropBorderColor(0,0,0,1)
 	iCD.frames[row][id]:SetFrameStrata('MEDIUM')
-	if iCD.direction[row] then
+	if c.horizontal then
 		if id == 1 then
 			iCD.frames[row][id]:SetPoint('LEFT', iCD[row] , 'LEFT', 0, 0)
 		else
@@ -808,7 +819,7 @@ function iCD:CreateNewFrame(id, row)
 	iCD.frames[row][id].cooldownText:SetTextColor(1,1,0.1,1)
 	--Stack
 	iCD.frames[row][id].stackText = iCD.frames[row][id]:CreateFontString()
-	iCD.frames[row][id].stackText:SetFont(iCD.font, 12, 'OUTLINE')
+	iCD.frames[row][id].stackText:SetFont(iCD.font, iCD.stackFontSize, 'OUTLINE')
 	if row == 'row4' then
 		iCD.frames[row][id].stackText:SetPoint('TOPRIGHT', iCD.frames[row][id], 'TOPRIGHT', 0,0)
 	elseif row == 'buffsI' or row == 'buffsC' then
@@ -925,7 +936,7 @@ function iCD:updateCDs()
 		iCD.frames.row4[id]:Show()
 		id = id + 1
 	end
-	iCD.row4:SetWidth((id-1)*(iCD.rowSizes.row4+1)-1)
+	iCD.row4:SetWidth((id-1)*(iCD.setups.row4.size+1)-1)
 	for i = id, #iCD.frames.row4 do
 		iCD.frames.row4[i].data = {}
 		iCD.frames.row4[i]:Hide()
@@ -1012,12 +1023,20 @@ function iCD:updateBuffs()
 	local temp = {}
 	local tempI = {}
 	local tempC = {}
+	_auras = {
+		playerBuffs = {},
+		targetDebuffs = {},
+		petBuffs = {},
+	}
 	if iCD.hasPlayerBuffs then
-		for i = 1, 41 do -- Buffs
-			local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('player', i)
-			if not name then
+		for i = 1, 129 do -- Buffs
+			local t = {UnitBuff('player', i)}
+			--local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('player', i)
+			if not t[1] then
 				break
 			else
+				local name, icon, count, duration, expirationTime, sourceUnit, spellID, castByPlayer = t[1], t[2], t[3], t[5], t[6], t[7], t[10], t[13]
+				_auras.playerBuffs[i] = t
 				if iCD.buffs[spellID] then
 					local data = {
 						endTime = expirationTime,
@@ -1083,11 +1102,13 @@ function iCD:updateBuffs()
 		end
 	end
 	if iCD.hasPetAuras then
-		for i = 1, 41 do -- Pet Buffs
-			local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitBuff('pet', i)
-			if not name then
+		for i = 1, 129 do -- Pet Buffs
+			local t = {UnitBuff('pet', i)}
+			if not t[1] then
 				break
 			else
+				local name, icon, count, duration, expirationTime, sourceUnit, spellID, castByPlayer = t[1], t[2], t[3], t[5], t[6], t[7], t[10], t[13]
+				_auras.petBuffs[i] = t
 				if iCD.PetBuffs[spellID] then
 					local data = {
 						endTime = expirationTime,
@@ -1153,62 +1174,67 @@ function iCD:updateBuffs()
 		end
 	end
 	if iCD.hasTargetDebuffs then
-		for i = 1, 41 do -- Debuffs
-			local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID = UnitDebuff('target', i, 'player')
-			if not name then
+		for i = 1, 129 do -- Debuffs
+			--local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID = UnitDebuff('target', i)
+			local t = {UnitDebuff('target', i)}
+			if not t[1] then
 				break
 			else
-				if iCD.debuffs[spellID] then
-					local data = {
-						endTime = expirationTime,
-						texture = icon,
-					}
-					if iCD.debuffs[spellID].stack then
-						if type(iCD.debuffs[spellID].stack) == 'string' then
-							data.stack = iCD.debuffs[spellID].stack
-						else
-							data.stack = count
+				local name, icon, count, duration, expirationTime, spellID, castByPlayer = t[1], t[2], t[3], t[5], t[6], t[10], t[13]
+				_auras.targetDebuffs[i] = t
+				if castByPlayer then
+					if iCD.debuffs[spellID] then
+						local data = {
+							endTime = expirationTime,
+							texture = icon,
+						}
+						if iCD.debuffs[spellID].stack then
+							if type(iCD.debuffs[spellID].stack) == 'string' then
+								data.stack = iCD.debuffs[spellID].stack
+							else
+								data.stack = count
+							end
 						end
-					end
-					if iCD.debuffs[spellID].customText then
-						data.customText = iCD.debuffs[spellID].customText
-					end
-					temp[spellID] = data
+						if iCD.debuffs[spellID].customText then
+							data.customText = iCD.debuffs[spellID].customText
+						end
+						temp[spellID] = data
 
-				end
-				if iCD.DebuffsI[spellID] then
-					local data = {
-						endTime = expirationTime,
-						texture = icon,
-					}
-					if iCD.DebuffsI[spellID].stack then
-						if type(iCD.DebuffsI[spellID].stack) == 'string' then
-							data.stack = iCD.DebuffsI[spellID].stack
-						else
-							data.stack = count
+					end
+					if iCD.DebuffsI[spellID] then
+						local data = {
+							endTime = expirationTime,
+							texture = icon,
+						}
+						if iCD.DebuffsI[spellID].stack then
+							if type(iCD.DebuffsI[spellID].stack) == 'string' then
+								data.stack = iCD.DebuffsI[spellID].stack
+							else
+								data.stack = count
+							end
 						end
-					end
-					if iCD.DebuffsI[spellID].customText then
-						data.customText = iCD.DebuffsI[spellID].customText
-					end
-					tempI[spellID] = data
-				end
-				if iCD.DebuffsC[spellID] then
-					local data = {
-						endTime = expirationTime,
-						texture = icon,
-					}
-					if iCD.DebuffsC[spellID].stack then
-						if type(iCD.DebuffsC[spellID].stack) == 'string' then
-							data.stack = iCD.DebuffsC[spellID].stack
-						else
-							data.stack = count
+						if iCD.DebuffsI[spellID].customText then
+							data.customText = iCD.DebuffsI[spellID].customText
 						end
+						tempI[spellID] = data
 					end
-					if iCD.DebuffsC[spellID].customText then
-						data.customText = iCD.DebuffsC[spellID].customText
+					if iCD.DebuffsC[spellID] then
+						local data = {
+							endTime = expirationTime,
+							texture = icon,
+						}
+						if iCD.DebuffsC[spellID].stack then
+							if type(iCD.DebuffsC[spellID].stack) == 'string' then
+								data.stack = iCD.DebuffsC[spellID].stack
+							else
+								data.stack = count
+							end
+						end
+						if iCD.DebuffsC[spellID].customText then
+							data.customText = iCD.DebuffsC[spellID].customText
+						end
+						tempC[spellID] = data
 					end
-					tempC[spellID] = data
 				end
 			end
 		end
@@ -1236,7 +1262,7 @@ function iCD:updateBuffs()
 		iCD.frames.row5[id]:Show()
 		id = id + 1
 	end
-	iCD.row5:SetHeight((id-1)*(iCD.rowSizes.row5+1)-1)
+	iCD.row5:SetHeight((id-1)*(iCD.setups.row5.size+1)-1)
 	for i = id, #iCD.frames.row5 do
 		iCD.frames.row5[i].data = {}
 		iCD.frames.row5[i]:Hide()
@@ -1264,7 +1290,7 @@ function iCD:updateBuffs()
 		iCD.frames.buffsI[id]:Show()
 		id = id + 1
 	end
-	iCD.buffsI:SetWidth((id-1)*(iCD.rowSizes.buffsI+1)-1)
+	iCD.buffsI:SetWidth((id-1)*(iCD.setups.buffsI.size+1)-1)
 	for i = id, #iCD.frames.buffsI do
 		iCD.frames.buffsI[i].data = {}
 		iCD.frames.buffsI[i]:Hide()
@@ -1293,7 +1319,7 @@ function iCD:updateBuffs()
 		iCD.frames.buffsC[id]:Show()
 		id = id + 1
 	end
-	iCD.buffsC:SetWidth((id-1)*(iCD.rowSizes.buffsC+1)-1)
+	iCD.buffsC:SetWidth((id-1)*(iCD.setups.buffsC.size+1)-1)
 	for i = id, #iCD.frames.buffsC do
 		iCD.frames.buffsC[i].data = {}
 		iCD.frames.buffsC[i]:Hide()
@@ -1661,7 +1687,6 @@ addon:RegisterEvent('AZERITE_ESSENCE_UPDATE')
 addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_ABSORB_AMOUNT_CHANGED', 'player')
 addon:RegisterUnitEvent('UNIT_HEAL_ABSORB_AMOUNT_CHANGED', 'player')
-addon:RegisterUnitEvent('UNIT_HEALTH_FREQUENT', 'player')
 addon:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
 
 local function updateHealth()
@@ -1688,9 +1713,6 @@ function addon:PLAYER_TARGET_CHANGED()
 	iCD:checkRange(true)
 end
 function addon:UNIT_HEALTH()
-	updateHealth()
-end
-function addon:UNIT_HEALTH_FREQUENT()
 	updateHealth()
 end
 function addon:UNIT_ABSORB_AMOUNT_CHANGED()
@@ -1924,10 +1946,12 @@ function addon:AZERITE_ESSENCE_UPDATE()
 	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 function addon:PLAYER_LEVEL_CHANGED()
+	iCD.level = UnitLevel('player')
 	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 function addon:PLAYER_LEVEL_UP()
-	addon:PLAYER_SPECIALIZATION_CHANGED()
+	--iCD.level = UnitLevel('player')
+	--addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 --------------------
 ---NAMEPLATE-RANGE--
@@ -2076,13 +2100,6 @@ do
 	end
 	f:SetScript("OnUpdate", npOnUpdate)
 end
-
-
-
-
-
-
-
 
 ---------------------------
 ---END-OF-NAMEPLATE-RANGE--

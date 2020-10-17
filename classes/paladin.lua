@@ -329,7 +329,8 @@ function iCD:PALADIN(specID)
 			[31884] = { -- Avenging Wrath
 				order = 6,
 			},
-			[212641] = { -- Guardian of Ancient Kings
+			--[212641] = { -- Guardian of Ancient Kings
+			[86659] = {
 				order = 7,
 				ignoreGCD = true,
 			},
@@ -343,6 +344,10 @@ function iCD:PALADIN(specID)
 					return select(4, GetTalentInfo(3, 3, 1))
 				end,
 				showTimeAfterGCD = true,
+			},
+			[6940] = { -- Blessing of Sacrifice
+				ignoreGCD = true,
+				order = 8,
 			},
 			[633] = { -- Lay on Hands
 				order = 9,

@@ -109,20 +109,22 @@ function iCD:HUNTER(specID)
 			[186257] = {}, -- Aspect of the Cheetah
 			[109248] = { -- Binding Shot
 				showFunc = function()
-					return select(4, GetTalentInfo(5, 1, 1))
+					return select(4, GetTalentInfo(5, 3, 1))
 				end,
 			},
+			[272679] = {}, -- Survival of the fittest (pet)
 			[781] = {}, -- Disengage
 			[5384] = {}, -- Feign Death
 			[1543] = {}, -- Flare
 			[34477] = {}, -- Misdirection
 			[187650] = {}, -- Freezing Trap
 			[187698] = {}, -- Tar Trap
-			[264265] = {}, -- Spirit Shock (pet)
+			--[264265] = {}, -- Spirit Shock (pet)
 			[90361] = {}, -- Spirit Mend (pet)
 			[19577] = {}, -- Intimidation
 			[136] = {}, -- Mend Pet
 			[209997] = {}, -- Play Dead
+			[19801] = {}, -- Tranquilizing Shot
 		}
 		t.buffsI = {
 			[272790] = { -- Barbed Shot
@@ -130,6 +132,10 @@ function iCD:HUNTER(specID)
 				pet = true,
 			},
 			[268877] = {}, -- Beast Cleave
+			[274443] = {  -- Dance of Death (azerite)
+				stack = "+A",
+				azerite = 211,
+			},
 		}
 		t.buffsC = {
 			[186265] = {}, -- Turtle

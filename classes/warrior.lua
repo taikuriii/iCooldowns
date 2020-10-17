@@ -573,7 +573,7 @@ function iCD:WARRIOR(specID)
 				stack = true,
 				level = 36,
 				stackFunc = function()
-					local v = select(5, iCD.UnitBuff('player', 'Ignore Pain'))
+					local v = select(4, iCD.UnitBuff('player', 'Ignore Pain'))
 					if v then
 						return v/1e3, '%.1f'
 					else

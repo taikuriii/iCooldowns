@@ -17,11 +17,10 @@ function iCD:DEATHKNIGHT(specID)
 			main = 'Death Strike',
 			range = 'Death Grip',
 		}
-		t.gcd = 49998 -- Death Strike
 		t.power = {
 			pos = {
-				x = -990,
-				y = -8,
+				x = -30,
+				y = -80,
 			},
 			func = function()
 				local DS = select(2, IsUsableSpell('Death Strike'))
@@ -29,17 +28,6 @@ function iCD:DEATHKNIGHT(specID)
 			end,
 		}
 		t.row1 = {
-
-			[210764] = { -- Rune Strike
-				order = 1,
-				showTimeAfterGCD = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(1, 3, 1))
-				end,
-				charges = true,
-				stack = true,
-				range = true,
-			},
 			[206931] = { -- Blooddrinker
 				order = 1,
 				showTimeAfterGCD = true,
@@ -68,6 +56,7 @@ function iCD:DEATHKNIGHT(specID)
 				stack = true,
 				charges = true,
 				showTimeAfterGCD = true,
+				level = 17,
 			},
 			[43265] = { -- Death and Decay
 				order = 4,
@@ -107,6 +96,7 @@ function iCD:DEATHKNIGHT(specID)
 						return ''
 					end
 				end,
+				level = 3,
 				--showTimeAfterGCD = true,
 			},
 			[274156] = { -- Consumption
@@ -122,32 +112,44 @@ function iCD:DEATHKNIGHT(specID)
 				order = 3,
 				stack = true,
 				charges = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(4, 3, 1))
-				end,
+				ignoreGCD = true,
+				level = 44,
 			},
 			[219809] = { -- Tombstone
 				order = 4,
 				showFunc = function()
-					return select(4, GetTalentInfo(3, 3, 1))
+					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 				cost = true,
 			},
 			[55233] = { -- Vampiric Blood
-				order = 5,
+				order = 6,
+				level = 29,
 			},
 			[48707] = { -- Anti-Magic Shell
-				order = 6,
+				order = 8,
+				level = 9,
 			},
 			[49028] = { -- Dancing Rune Weapon
-				order = 7,
+				order = 10,
 				range = true,
+				level = 34,
 			},
 			[48792] = { -- Icebound Fortitude
-				order = 8,
+				order = 12,
+				level = 38,
+			},
+			[51052] = { -- Anti-Magic Zone
+				order = 20,
+				level = 47,
+			},
+			[49039] = { -- Lichborne
+				order = 22,
+				ignoreGCD = true,
+				level = 33,
 			},
 			[194844] = { -- Bonestorm
-				order = 11,
+				order = 25,
 				showFunc = function()
 					return select(4, GetTalentInfo(7, 3, 1))
 				end,
@@ -164,49 +166,69 @@ function iCD:DEATHKNIGHT(specID)
 				charges = function() return iCD:Essences(32, true) end
 			},
 			[108199] = {}, -- Gorefiend's Grasp
-			[212552] = {}, -- Wraith Walk
-			[48265] = {}, -- Death's Advance
-		}
-		t.row5 = {
-			[48707] = {}, -- Anti-Magic Shell
 			[212552] = { -- Wraith Walk
 				showFunc = function()
 					return select(4, GetTalentInfo(5, 3, 1))
 				end,
+			}, 
+			[48265] = {}, -- Death's Advance
+			[206940] = { -- Mark of Blood
+			showFunc = function()
+				return select(4, GetTalentInfo(4, 3, 1))
+			end,
 			},
-			[55233] = { -- Vampiric Blood
+			[48743] = { -- Death Pact
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 2, 1))
+				end,
+			},
+			[46585] = {}, -- Raise Dead
+		}
+		t.row5 = {
+			[48707] = { -- Anti-Magic Shell
 				stack = true,
 				stackFunc = function()
-					if not iCD.customSpellTimers[55233] then return '' end
-					return iCD.customSpellTimers[55233]/1e6*5, '%.1f'
+					local amount = select(5, iCD.UnitBuff('player', 'Anti-Magic Shell'))
+					if amount then
+						return math.floor(amount/1e3)
+					else
+						return ""
+					end
 				end,
+			},
+			[55233] = { -- Vampiric Blood
 			},
 			[81256] = {}, -- Dancing Rune Weapon
 			[48792] = {}, -- Icebound Fortitude
+			[194679] = {}, -- Rune Tap
 		}
 		t.buffsI = {
 			[195181] = { -- Bone shield
 				stack = true,
 			},
-			[274009] = {}, -- DS Leech
+			[326918] = { -- Rune of Hysteria
+				stack = "+RP",
+			},
+			[49039] = {}, -- Lichborne
+			--[274009] = {}, -- DS Leech
 			[48265] = {}, -- Death's Advance
-			[194679] = { -- Rune Tap
+			[206940] = { -- Mark of Blood
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 3, 1))
 				end,
-			},
-			[206940] = { -- Mark of Blood
-				showFunc = function()
-					return select(4, GetTalentInfo(6, 3, 1))
-				end,
 				debuff = true,
+			},
+			[212552] = { -- Wraith Walk
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 3, 1))
+				end,
 			},
 			[48265] = {}, -- Death's Advance
 			--[188290] = {}, -- Death and Decay
 			[77535] = { -- Blood Shield
 				stack = true,
 				stackFunc = function()
-					local amount = select(5, iCD.UnitBuff('player', 'Blood Shield'))
+					local amount = select(4, iCD.UnitBuff('player', 'Blood Shield'))
 					if amount then
 						return math.floor((amount/UnitHealthMax('player'))*100)
 					else
@@ -242,7 +264,7 @@ function iCD:DEATHKNIGHT(specID)
 			},
 			[219809] = { -- Tombstone
 				showFunc = function()
-					return select(4, GetTalentInfo(3, 3, 1))
+					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 				stack = true,
 				stackFunc = function()

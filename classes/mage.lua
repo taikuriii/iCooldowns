@@ -414,6 +414,7 @@ function iCD:MAGE(specID)
 			[108839] = {}, -- Ice Floes
 			[228358] = { -- Winter's Chill
 				debuff = true,
+				stack = true,
 			},
 		}
 	end

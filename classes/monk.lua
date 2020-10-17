@@ -471,11 +471,13 @@ function iCD:MONK(specID)
 				glow = true,
 				glowSound = true,
 				range = true,
+				showTimeAfterCast = true,
 			},
 			[100784] = { -- Blackout Strike
 				order = 8,
 				range = true,
 				customRangeSpell = 'Tiger Palm',
+				showTimeAfterCast = true,
 				stack = true,
 				stackFunc = function()
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Teachings of the Monastery')
@@ -490,36 +492,29 @@ function iCD:MONK(specID)
 			[196725] =  { -- Refreshing Jade Wind
 				order = 10,
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 1, 1))
+					return select(4, GetTalentInfo(6, 2, 1))
 				end,
-			},
-			[124081] =  { -- Zen Pulse
-				order = 12,
-				showFunc = function()
-					return select(4, GetTalentInfo(1, 2, 1))
-				end,
-				range = true,
+				showTimeAfterCast = true,
 			},
 			[123986] =  { -- Chi Burst
 				order = 12,
-				showFunc = function()
-					return select(4, GetTalentInfo(1, 1, 1))
-				end,
-			},
-			[115098] =  { -- Mistwalk
-				order = 12,
+				showTimeAfterCast = true,
 				showFunc = function()
 					return select(4, GetTalentInfo(1, 3, 1))
 				end,
-				range = true,
 			},
 			[191837] = { -- Essence of Font
 				order = 14,
+				showTimeAfterCast = true,
 			},
 
 
 		}
 		t.row2 = {
+			[216113] = { -- Way of the Crane
+				order = 1,
+				showFunc = function() return iCD:Essences(32, true) end,
+			},
 			[116680] = { -- Thunder Focus Tea
 				order = 2,
 				ignoreGCD = true,
@@ -528,11 +523,9 @@ function iCD:MONK(specID)
 			},
 			[197908] = { -- Mana Tea
 				order = 3,
-				ignoreGCD = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 1, 1))
+					return select(4, GetTalentInfo(3, 3, 1))
 				end,
-
 			},
 			[122281] = { -- Healing Elixir
 				order = 4,
@@ -551,7 +544,7 @@ function iCD:MONK(specID)
 					return select(4, GetTalentInfo(5, 3, 1))
 				end,
 			},
-			[122278] = { -- Diffuse Magic
+			[122783] = { -- Diffuse Magic
 				order = 4,
 				ignoreGCD = true,
 				showFunc = function()
@@ -564,31 +557,27 @@ function iCD:MONK(specID)
 			},
 			[198664] = { -- Invoke Chi-Ji the Red Crane
 				order = 7,
-				ignoreGCD = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 2, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end,
 			},
 			[115310] = { -- Revival
 				order = 8,
 			},
+			[243435] = { -- Fortifying Brew
+				order = 10,
+			},
 		}
 		t.row3 = {
-			[205406] = { -- Sheilun's Gift
-				order = 3,
-				customText = function() return GetSpellCount(205406) end,
-			},
 			[115151] = { -- Renewing Mist
 				order = 4,
+				showTimeAfterCast = true,
+				charges = true,
+				stack = true,
 			},
 		}
 		t.row4 = {
 			[115450] = {}, -- Detox
-			[119381] = { -- Leg Sweep
-				showFunc = function()
-					return select(4, GetTalentInfo(4, 3, 1))
-				end,
-			},
 			[198898] = { -- Song of Chi-Ji
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 2, 1))
@@ -601,7 +590,7 @@ function iCD:MONK(specID)
 			},
 			[115313] = { -- Summon Jade Serpent Statue
 				showFunc = function()
-					return select(4, GetTalentInfo(6, 3, 1))
+					return select(4, GetTalentInfo(6, 1, 1))
 				end,
 			},
 			[115078] = {}, -- Paralysis
@@ -613,7 +602,7 @@ function iCD:MONK(specID)
 				charges = true,
 				ignoreGCD = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
+					return select(4, GetTalentInfo(2, 2, 1))
 				end,
 			},
 			[109132] = { -- Roll
@@ -621,12 +610,12 @@ function iCD:MONK(specID)
 				charges = true,
 				ignoreGCD = true,
 				showFunc = function()
-					return not select(4, GetTalentInfo(2, 1, 1))
+					return not select(4, GetTalentInfo(2, 2, 1))
 				end,
 			},
 			[116841] = { -- Tiger's Lust
 				showFunc = function()
-					return  select(4, GetTalentInfo(2, 2, 1))
+					return  select(4, GetTalentInfo(2, 3, 1))
 				end,
 			},
 		}
@@ -637,13 +626,14 @@ function iCD:MONK(specID)
 			[119085] = { -- Chi Torpedo, speed buff
 				stack = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(2, 1, 1))
+					return select(4, GetTalentInfo(2, 2, 1))
 				end,
-			},
-			[199407] = { -- Light on Your Feet (artifact)
 			},
 		}
 		t.buffsI = {
+			[216113] = {
+				showFunc = function() return iCD:Essences(32, true) end,
+			},
 			[116680] = { -- Thunder Focus Tea
 				stack = select(4, GetTalentInfo(7, 2, 1))
 			},

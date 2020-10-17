@@ -43,6 +43,11 @@ function iCD:GetGenerals(specID)
 		local currentRole = roles[specID] or 3
 		local t = {}
 		t.row1 = {
+			[310592] = { -- Strength of the Warden, essence
+				order = 12,
+				showFunc = function() return iCD:Essences(34, true) end,
+				showTimeAfterGCD = true,
+			},
 			[293031] = { -- Sphere of Suppression, essence
 				order = 12,
 				showFunc = function() return iCD:Essences(3, true) end,
@@ -131,6 +136,20 @@ function iCD:GetGenerals(specID)
 				showFunc = function() return iCD:Essences(14, true) end,
 				showTimeAfterGCD = true,
 			},
+			[205752] = { -- Blood Fury
+				order = -1,
+				showFunc = function()
+					local _, race = UnitRace('player')
+					return race == 'Orc'
+				end,
+			},
+			[26297] = { -- Berserking
+				order = -1,
+				showFunc = function()
+					local _, race = UnitRace('player')
+					return race == 'Troll'
+				end,
+			},
 		}
 		if currentRole ~= 1 then
 			t.row2[295373] = { -- The Crucible of Flame, essence
@@ -171,7 +190,13 @@ function iCD:GetGenerals(specID)
 					return race == 'BloodElf'
 				end,
 			},
-			[129597] = { -- Arcane Torrent ( Energy )
+			[129597] = { -- Arcane Torrent ( Energy, monk )
+				showFunc = function()
+					local _, race = UnitRace('player')
+					return race == 'BloodElf'
+				end,
+			},
+			[25046] = { -- Arcane Torrent ( Energy, rogue )
 				showFunc = function()
 					local _, race = UnitRace('player')
 					return race == 'BloodElf'
@@ -181,18 +206,6 @@ function iCD:GetGenerals(specID)
 				showFunc = function()
 					local _, race = UnitRace('player')
 					return race == 'Scourge'
-				end,
-			},
-			[205752] = { -- Blood Fury
-				showFunc = function()
-					local _, race = UnitRace('player')
-					return race == 'Orc'
-				end,
-			},
-			[26297] = { -- Berserking
-				showFunc = function()
-					local _, race = UnitRace('player')
-					return race == 'Troll'
 				end,
 			},
 			[202719] = { -- Arcane Torrent ( Pain )
@@ -248,6 +261,18 @@ function iCD:GetGenerals(specID)
 					local _, race = UnitRace('player')
 					return race == 'NightElf'
 				end,
+			},
+			[107079] = { -- Quaking Palm
+				showFunc = function()
+					local _, race = UnitRace('player')
+					return race == 'Pandaren'
+				end,
+			},
+			[20594] = { -- Stoneform
+			showFunc = function()
+				local _, race = UnitRace('player')
+				return race == 'Dwarf'
+			end,
 			},
 			[-139320] = {}, -- Ravaged Seed Pod
 			[-140797] = {}, -- Fang of Tichondrius
@@ -310,7 +335,7 @@ function iCD:GetGenerals(specID)
 			[251946] = { -- Smoldering Titanguard
 				stack = true,
 				stackFunc = function()
-					local v = select(5, iCD.UnitBuff('player', 'Bulwark of Flame', nil, 'player'))
+					local v = select(4, iCD.UnitBuff('player', 'Bulwark of Flame', nil, 'player'))
 					if v then
 						return v/1e3, '%.1f'
 					else
@@ -322,7 +347,7 @@ function iCD:GetGenerals(specID)
 			[313060] = { -- Stoneskin
 				stack = true,
 				stackFunc = function()
-					local v = select(5, iCD.UnitBuff('player', 'Stoneskin', nil, 'player'))
+					local v = select(4, iCD.UnitBuff('player', 'Stoneskin', nil, 'player'))
 					if v then
 						return v/1e3, '%.0f'
 					else
@@ -335,8 +360,17 @@ function iCD:GetGenerals(specID)
 				stack = true,
 				itemReq = 151975,
 			},
-			[314585] = {
+			[314585] = { -- Lingering Psychic Shell
 				itemReq = 174277,
+				stack = true,
+				stackFunc = function()
+					local amount = select(5, iCD.UnitBuff('player', 'Psychic Shell'))
+					if amount then
+						return math.floor(amount/1e3)
+					else
+						return ""
+					end
+				end,
 			},
 			[295048] = { -- Touch of the Everlasting , essence
 				showFunc = function() return iCD:Essences(33, true) end,
@@ -353,8 +387,17 @@ function iCD:GetGenerals(specID)
 			[312922] = { -- Will to Survive , essence
 				showFunc = function() return iCD:Essences(33) end,
 			},
+			[310595] = { -- Strength of the Warden, essence
+				showFunc = function() return iCD:Essences(34) end,
+				stack = "+D",
+			},
+
 		}
 		t.buffsC = {
+			[299054] = { -- Pocket-Sized Computation Device (dodge)
+				itemReq = 167555,
+				stack = true,
+			},
 			[316703] = { -- Searing Flames
 				stack = true, 
 			},
@@ -597,21 +640,12 @@ function iCD:GetGenerals(specID)
 				showFunc = function() return iCD:Essences(17) end,
 				stack = true,
 			},
-			[318216] = { -- Honed mind, corruption
-				stack = "+M",
-			},
 			[313571] = { -- Dragon's Flight
 				stack = "+H",
 				itemReq = 174044,
 			},
-			[316823] = {  -- The End is Coming (Void ritual, corruption)
-				stack = true,
-			},
 			[317859] = { -- Draconic Empowerment (Legendary cloak)
 				stack = "+P",
-			},
-			[316801] = { -- Ineffable Truth (corruption)
-				stack = "-CD"
 			},
 		}
 	return t
