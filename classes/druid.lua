@@ -29,10 +29,6 @@ function iCD:DRUID(specID)
 			range = 'Moonfire',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local form = GetShapeshiftFormID()
 				if form then
@@ -181,10 +177,6 @@ function iCD:DRUID(specID)
 			range = 'Moonfire',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local form = GetShapeshiftFormID()
 				if form then
@@ -334,10 +326,6 @@ function iCD:DRUID(specID)
 		}
 		--gcd = 8921, -- Moonfire
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local form = GetShapeshiftFormID()
 				if form then
@@ -604,10 +592,6 @@ function iCD:DRUID(specID)
 			range = 'Moonfire',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local form = GetShapeshiftFormID()
 				if form then

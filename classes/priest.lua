@@ -24,10 +24,6 @@ function iCD:PRIEST(specID)
 			range = 'Shadow Word: Pain',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
@@ -147,10 +143,6 @@ function iCD:PRIEST(specID)
 			range = 'Shadow Word: Pain',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
@@ -233,10 +225,6 @@ function iCD:PRIEST(specID)
 			range = 'Shadow Word: Pain',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 13)/UnitPowerMax('player', 13))*100)
 			end,

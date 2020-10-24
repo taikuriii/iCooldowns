@@ -24,10 +24,6 @@ function iCD:SHAMAN(specID)
 			range = "Lightning Bolt"
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8
-			},
 			func = function()
 				local ES = select(2, IsUsableSpell('Earth Shock'))
 				return (not ES and '|cff00ff00' or '') .. UnitPower('player', 11)
@@ -144,10 +140,6 @@ function iCD:SHAMAN(specID)
 			range = "Lightning Bolt"
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8
-			},
 			func = function()
 				return UnitPower("player", 11)
 			end
@@ -269,10 +261,6 @@ function iCD:SHAMAN(specID)
 			range = "Flame Shock"
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8
-			},
 			func = function()
 				return math.floor((UnitPower("player", 0) / UnitPowerMax("player", 0)) * 100)
 			end

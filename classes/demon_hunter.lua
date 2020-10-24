@@ -25,10 +25,6 @@ function iCD:DEMONHUNTER(specID)
 			range = 'Throw Glaive',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 17)
 				if p < 40 then
@@ -207,10 +203,6 @@ function iCD:DEMONHUNTER(specID)
 		-- Row 1
 		--gcd = 203782,
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 18)
 				if p < 30 then

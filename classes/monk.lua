@@ -30,7 +30,9 @@ function iCD:MONK(specID)
 	local temp = {}
 	temp.spec = {}
 	temp.all = {}
-	temp.all.row1 = {}
+	temp.all.row1 = {
+
+	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
 	temp.all.row4 = {}
@@ -47,10 +49,6 @@ function iCD:MONK(specID)
 	t.buffsI = {}
 	if specID == 268 then --Brewmaster
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local power = UnitPower('player', 3)
 				local regen = GetPowerRegen()
@@ -92,11 +90,11 @@ function iCD:MONK(specID)
 				charges = IsEquippedItem(151788),
 				stack = IsEquippedItem(151788),
 			},
-			[205523] = { -- Blackout Strike
+			[205523] = { -- Blackout Kick
 				order = 4,
 				range = true,
 				customRangeSpell = 'Tiger Palm',
-				stack = select(4, GetTalentInfo(7, 2, 1)),
+				stack = select(4, GetTalentInfo(7, 3, 1)),
 				stackFunc = select(4, GetTalentInfo(7, 3, 1)) and function()
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Blackout Combo')
 					if expirationTime then
@@ -127,7 +125,7 @@ function iCD:MONK(specID)
 					end
 				end,
 				showTimeAfterGCD = true,
-				level = 40,
+				level = 29,
 			},
 			[116847] = { -- Rushing Jade Wind
 				order = 8,
@@ -164,6 +162,15 @@ function iCD:MONK(specID)
 			},
 		}
 		t.row2 = {
+			[322507] = { -- Celestial Brew
+				order = 1,
+			},
+			[325153] = { -- Exploding Keg
+				order = 2,
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 3, 1))
+				end,
+			},
 			[122281] = { -- Healing Elixir
 				order = 3,
 				stack = true,
@@ -180,15 +187,9 @@ function iCD:MONK(specID)
 					return select(4, GetTalentInfo(5, 3, 1))
 				end,
 			},
-			[115295] = { -- Guard
-				order = 5,
-				range = true,
-				showFunc = function() return select(4, GetTalentInfo(7, 2, 1)) end,
-			},
 			[132578] = { -- Invoke Niuzao, the Black Ox
 				order = 6,
 				range = true,
-				showFunc = function() return select(4, GetTalentInfo(6, 3, 1)) end,
 			},
 			[115203] = { -- Fortifying Brew
 				order = 8,
@@ -203,7 +204,7 @@ function iCD:MONK(specID)
 
 		}
 		t.row3 = {
-			[115072] = { -- Expel Harm
+			[322101] = { -- Expel Harm
 				order = 3,
 				stack = true,
 				stackFunc = function()
@@ -212,21 +213,11 @@ function iCD:MONK(specID)
 				cost = true,
 				level = 50,
 			},
-			[119582] = { -- Brews
+			[119582] = { -- Purifying Brew
 				order = 2,
 				stack = true,
 				charges = true,
 				ignoreGCD = true,
-				AM = function()
-					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Ironskin Brew')
-					if expirationTime then
-						local dura = expirationTime - GetTime()
-						if dura + 8.5 > 25.5 then
-							return true
-						end
-					end
-					return
-				end,
 			},
 			[115399] = { --Black Ox Brew
 				order = 1,
@@ -278,6 +269,17 @@ function iCD:MONK(specID)
 		t.row5 = {
 			[120954] = {}, -- Fortifying Brew
 			[122278] = {}, -- Dampening Harm
+			[322507] = { -- Celestial Brew
+				stack = true,
+				stackFunc = function()
+					local amount = select(4, iCD.UnitBuff('player', 'Celestial Brew'))
+					if amount then
+						return math.floor(amount/1e3)
+					else
+						return ""
+					end
+				end,
+			},
 
 		}
 		t.buffsC = {
@@ -293,10 +295,6 @@ function iCD:MONK(specID)
 		}
 	elseif specID == 269 then --Windwalker
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 					return UnitPower('player', 3)
 			end,
@@ -456,10 +454,6 @@ function iCD:MONK(specID)
 		}
 	elseif specID == 270 then --Mistweaver
 			t.power = {
-				pos = {
-					x = -990,
-					y = -8,
-				},
 				func = function()
 					return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0)*100)
 				end,

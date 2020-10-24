@@ -311,6 +311,12 @@ function iCD:GetGenerals(specID)
 			[-168989] = {}, -- Hyperthread Wristwraps
 			[-172666] = {}, -- Corrupted Gladiator's Medallion
 			[-173944] = {}, -- Forbidden Obsidian Claw
+			[-13446] = { -- Major Combat Healing Potion (HP potion cd)
+				utility = true,
+			},
+			[-86125] = { -- Greater Holy Protection Potion (DPS potion)
+				utility = true,
+			},
 		}
 		t.row5 = { -- Buffs
 			[1022] = {}, -- Blessing of Protection

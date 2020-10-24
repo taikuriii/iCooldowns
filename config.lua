@@ -38,7 +38,7 @@ iCD.setups = {
       from = "bottomright",
       to = "top",
       x = -25,
-      y = 2,
+      y = 17,
     }
   },
   row4 = {
@@ -48,7 +48,7 @@ iCD.setups = {
       from = "top",
       to = "bottom",
       x = 0,
-      y = -76,
+      y = -77,
     }
   },
   row5 = {
@@ -68,7 +68,7 @@ iCD.setups = {
       from = "bottomleft",
       to = "top",
       x = 25,
-      y = 2,
+      y = 17,
     }
   },
   buffsC = {
@@ -98,7 +98,7 @@ iCD.setups = {
       from = "bottom",
       to = "top",
       x = 0,
-      y = 2,
+      y = 17,
     }
   },
   gcd = {
@@ -118,8 +118,8 @@ iCD.setups = {
     position = { -- anchor: UIParent
       from = "bottomright",
       to = "center",
-      x = -120,
-      y = -150,
+      x = -30,
+      y = -65,
     },
   },
   outOfRange = {

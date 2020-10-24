@@ -24,10 +24,6 @@ function iCD:ROGUE(specID)
 			range = 'Poisoned Knife',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 3)
 				if p < 40 then
@@ -169,10 +165,6 @@ function iCD:ROGUE(specID)
 			range = 'Pistol Shot',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 3)
 				if p < 50 then
@@ -287,10 +279,6 @@ function iCD:ROGUE(specID)
 			range = 'Shuriken Toss',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 3)
 				if p < 40 then

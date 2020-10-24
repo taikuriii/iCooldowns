@@ -5,11 +5,20 @@ function iCD:PALADIN(specID)
 	temp.spec = {}
 	temp.all = {}
 	temp.all.row1 = {}
-	temp.all.row2 = {}
+	temp.all.row2 = {
+		[6940] = { -- Blessing of Sacrifice
+			ignoreGCD = true,
+			order = 8,
+		},
+		[633] = { -- Lay on Hands
+			order = 9,
+			ignoreGCD = true,
+		},
+
+	}
 	temp.all.row3 = {}
 	temp.all.row4 = {
 		[1044] = {}, -- Blessing of Freedom
-		[6940] = {}, -- Blessing of Sacrifice
 		[642] = {}, -- Divine Shield
 		[853] = {}, -- Hammer of Justice
 		[62124] = { -- Hand of Reckoning
@@ -46,10 +55,6 @@ function iCD:PALADIN(specID)
 			},
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0)*100)
 			end,
@@ -248,6 +253,11 @@ function iCD:PALADIN(specID)
 			main = 'Rebuke',
 			range = "Avenger's Shield",
 		}
+		t.power = {
+			func = function()
+				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0))*100
+			end,
+		}
 		t.row1 = {
 			[31935] = { -- Avenger's Shield
 				order = 4,
@@ -318,77 +328,53 @@ function iCD:PALADIN(specID)
 				end,
 				showTimeAfterGCD = true,
 			},
+			[24275] = { -- Hammer of Wrath
+				glow = true,
+				order = 20,
+				range = true,
+				showTimeAfterGCD = true,
+			},
 		}
 		t.row2 = {
 			[152262] = { -- Seraphim
 				order = 3,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
+					return select(4, GetTalentInfo(5, 3, 1))
+				end,
+			},
+			[327193] = { -- Moment of Glory
+				order = 4,
+				showFunc = function()
+					return select(4, GetTalentInfo(2, 3, 1))
 				end,
 			},
 			[31884] = { -- Avenging Wrath
 				order = 6,
 			},
-			--[212641] = { -- Guardian of Ancient Kings
-			[86659] = {
-				order = 7,
+			[105809] = { -- Holy Avenger
+				order = 12,
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 2, 1))
+				end,
+			},
+			[212641] = { -- Guardian of Ancient Kings
+			--[86659] = {
+				order = 14,
 				ignoreGCD = true,
 			},
 			[31850] = { -- Ardent Defender
-				order = 8,
+				order = 17,
 				ignoreGCD = true,
 			},
 			[115750] = { -- Blinding Light
-				order= 9,
+				order= 20,
 				showFunc = function()
 					return select(4, GetTalentInfo(3, 3, 1))
 				end,
 				showTimeAfterGCD = true,
 			},
-			[6940] = { -- Blessing of Sacrifice
-				ignoreGCD = true,
-				order = 8,
-			},
-			[633] = { -- Lay on Hands
-				order = 9,
-				ignoreGCD = true,
-			},
 		}
-		t.row3 = {
-			[184092] = { -- Light of the Protector
-				order = 2,
-				charges = IsEquippedItem(144275),
-				stack = IsEquippedItem(144275),
-				showFunc = function()
-					return not (select(4, GetTalentInfo(5, 3, 1)))
-				end,
-			},
-			[213652] = { -- Hand of the Protector
-				order = 2,
-				charges = IsEquippedItem(144275),
-				stack = IsEquippedItem(144275),
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-			},
-			[53600] = { -- Shield of the Righteous
-				order = 3,
-				stack = true,
-				charges = true,
-				ignoreGCD = true,
-				range = true,
-				AM = function()
-					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Shield of the Righteous')
-					if expirationTime then
-						local dura = expirationTime - GetTime()
-						if dura + 4.5 > 13.5 then
-							return true
-						end
-					end
-					return
-				end,
-			},
-		}
+		t.row3 = {}
 		t.row4 = {
 			[190784] = { -- Divine Steed
 				charges = true,
@@ -401,16 +387,6 @@ function iCD:PALADIN(specID)
 						return ''
 					end
 				end
-			},
-			[204035] = { -- Bastion of Light
-				showFunc = function()
-					return select(4, GetTalentInfo(2, 3, 1))
-				end,
-			},
-			[204150] = { -- Aegis of Light
-				showFunc = function()
-					return select(4, GetTalentInfo(6, 1, 1))
-				end,
 			},
 			[1022] = { -- Blessing of Protection
 				showFunc = function()
@@ -429,13 +405,18 @@ function iCD:PALADIN(specID)
 			[212641] = {}, -- Guardian of Ancient Kings
 		}
 		t.buffsI = {
+			[105809] = { -- Holy Avenger
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 2, 1))
+				end,
+			}, -- Seraphim
 			[132403] = {}, -- Shield of the Righteous
 			[280375] = {}, -- Redoubt
 		}
 		t.buffsC = {
 			[152262] = { -- Seraphim
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
+					return select(4, GetTalentInfo(5, 3, 1))
 				end,
 			}, -- Seraphim
 			[31884] = {}, -- Avenging Wrath
@@ -447,10 +428,6 @@ function iCD:PALADIN(specID)
 			range = "Judgment",
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return UnitPower('player', 9)
 			end,

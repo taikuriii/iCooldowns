@@ -24,10 +24,6 @@ function iCD:HUNTER(specID)
 			range = 'Cobra Shot',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 2)
 				if p < 50 then
@@ -148,10 +144,6 @@ function iCD:HUNTER(specID)
 			range = 'Arcane Shot',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 2)
 				if p < 50 then
@@ -263,10 +255,6 @@ function iCD:HUNTER(specID)
 			range = 'Harpoon',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local p = UnitPower('player', 2)
 				if p < 50 then

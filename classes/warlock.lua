@@ -25,10 +25,6 @@ function iCD:WARLOCK(specID)
 			range = 'Corruption',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
@@ -241,10 +237,6 @@ function iCD:WARLOCK(specID)
 			range = 'Shadow bolt',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
@@ -376,10 +368,6 @@ function iCD:WARLOCK(specID)
 					range = 'Immolate',
 				}
 				t.power = {
-					pos = {
-						x = -990,
-						y = -8,
-					},
 					func = function()
 						return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 					end,

@@ -46,10 +46,6 @@ function iCD:WARRIOR(specID)
 			range = 'Heroic Throw',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local power = UnitPower('player', 1)
 				if power >= 85 then
@@ -267,10 +263,6 @@ function iCD:WARRIOR(specID)
 			range = 'Heroic Throw',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local power = UnitPower('player', 1)
 				local isRampageUsable = select(2, IsUsableSpell('Rampage'))
@@ -410,10 +402,6 @@ function iCD:WARRIOR(specID)
 			range = 'Heroic Throw',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				local power = UnitPower('player', 1)
 				if power >= 60 then
@@ -433,6 +421,7 @@ function iCD:WARRIOR(specID)
 				glow = true,
 				glowSound = true,
 				stack = true,
+				level = 3,
 				stackFunc = function()
 					if iCD.UnitBuff('player', "Kakushan's Stormscale Gauntlets") then
 						return iCD.colors.green .. '+'
@@ -493,7 +482,7 @@ function iCD:WARRIOR(specID)
 				row = 1,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
+					return select(4, GetTalentInfo(2, 3, 1))
 				end,
 				showTimeAfterGCD = true,
 			},
@@ -502,14 +491,14 @@ function iCD:WARRIOR(specID)
 				range = true,
 				cost = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(1, 3, 1))
+					return select(4, GetTalentInfo(5, 3, 1))
 				end,
 				showTimeAfterGCD = true,
 			},
 			[228920] = { -- Ravager
 				order = 10,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end,
 				showTimeAfterGCD = true,
 			},
@@ -517,34 +506,32 @@ function iCD:WARRIOR(specID)
 		t.row2 = {
 			[1160] = { -- Demoralizing Shout
 				order = 4,
-				level = 48,
+				level = 27,
 			},
 			[12975] = { -- Last Stand
 				order = 5,
 				ignoreGCD = true,
-				level = 32,
+				level = 38,
 			},
 			[871] = { -- Shield Wall
 				order = 7,
 				ignoreGCD = true,
-				level = 55,
+				level = 23,
 			},
 			[23920] = { -- Spell Reflection
 				order = 9,
 				ignoreGCD = true,
-				level = 70,
+				level = 47,
 			},
 			[107574] = { -- Avatar
 				order = 10,
-				level = 40,
+				level = 32,
 			},
 			[5246] = {  -- Intimidating Shout
 				order = 13,
-				level = 70,
 			},
 			[97462] = { -- Rallying Cry
 				order = 15,
-				level = 80,
 			},
 		}
 		t.row3 = {
@@ -566,12 +553,13 @@ function iCD:WARRIOR(specID)
 					end
 					return
 				end,
+				level = 6,
 			},
 			[190456] = { -- Ignore Pain
 				order = 1,
 				cost = true,
 				stack = true,
-				level = 36,
+				level = 17,
 				stackFunc = function()
 					local v = select(4, iCD.UnitBuff('player', 'Ignore Pain'))
 					if v then
@@ -596,23 +584,27 @@ function iCD:WARRIOR(specID)
 			},
 		}
 		t.row4 = {
-			[18499] = {
-				level = 44,
-			}, -- Berserker Rage
+			[18499] = { -- Berserker Rage
+				level = 29,
+			},
 			--[198304] = {}, -- Intercept
+			[100] = { -- Charge
+				charges = select(4, GetTalentInfo(2, 1, 1)),
+				stack = select(4, GetTalentInfo(2, 1, 1)),
+				level = 2,
+			},
 			[355] = {  -- Taunt
 				ignoreGCD = true,
 			},
-			[198304] = { -- Intercept
-				stack = true,
-				charges = true,
-				level = 28,
+			[3411] = { -- Intervene
+				level = 43,
 			},
 			[6544] = { -- Heroic Leap
 				charges = IsEquippedItem(143728),
 				stack = IsEquippedItem(143728),
 				level = 26,
 			},
+			[64382] = {}, -- Shattering Throw
 		}
 		t.row5 = {
 			[1160] = { -- Demoralizing Shout
@@ -621,7 +613,7 @@ function iCD:WARRIOR(specID)
 			[12975] = {}, -- Last Stand
 			[227744] = { -- Ravager
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end,
 			},
 			[871] = {}, -- Shield Wall
@@ -630,14 +622,13 @@ function iCD:WARRIOR(specID)
 		t.buffsI = {
 			[32216] = { -- Victory Rush enabled
 				showFunc = function()
-					return not select(4, GetTalentInfo(1, 3, 1))
+					return not select(4, GetTalentInfo(5, 3, 1))
 				end,
 			},
 			[132404] = {}, -- Shield Block
 			[204488] = { -- Focused Rage
 				stack = true,
 			},
-			[203581] = {}, -- Dragon Scales
 			--[[
 			[202573] = { -- Vengeance: Revenge
 				showFunc = function()
@@ -666,6 +657,57 @@ function iCD:WARRIOR(specID)
 				stack = '+A',
 			},
 		}
+
+
+	else -- no spec
+		iCD.outOfRangeSpells = {
+			main = 'Slam',
+			range = 'Slam',
+		}
+		t.power = {
+			pos = {
+				x = -30,
+				y = -8,
+			},
+			func = function()
+				local power = UnitPower('player', 1)
+				if power >= 85 then
+					return iCD.colors.green .. power
+				else
+					return power
+				end
+			end,
+		}
+		t.row1 = {
+			[23922] = { -- Shield Slam
+				order = 1,
+				glow = true,
+				range = true,
+				cost = true,
+				showTimeAfterGCD = true,
+				level = 3,
+			},
+		}
+		t.row2 = {}
+		t.row3 = {
+			[2565] = { -- Shield Block
+				stack = true,
+				charges = true,
+				cost = true,
+				level = 6,
+			},
+		}
+		t.row4 = {
+			[100] = { -- Charge
+				level = 2,
+			},
+		}
+		t.row5 = {
+		}
+		t.buffsI = {
+			[32216] = {}, -- Victory Rush
+		}
+
 	end
 	return temp
 end

@@ -957,7 +957,7 @@ function iCD:updateOnCD()
 						end
 					end
 				elseif k < 0 then
-					if IsEquippedItem(-k) then
+					if v.utility or IsEquippedItem(-k) then
 						temp[k] = v
 					end
 				else
@@ -980,7 +980,7 @@ function iCD:updateOnCD()
 						end
 					end
 				elseif k < 0 then
-					if IsEquippedItem(-k) then
+					if v.utility or IsEquippedItem(-k) then
 						temp[k] = v
 					end
 				else
@@ -1003,7 +1003,7 @@ function iCD:updateOnCD()
 						end
 					end
 				elseif k < 0 then
-					if IsEquippedItem(-k) then
+					if v.utility or IsEquippedItem(-k) then
 						temp[k] = v
 					end
 				else
@@ -1755,7 +1755,7 @@ function addon:PLAYER_LOGIN()
 		if iCD.spellData.spec.power.pos then
 			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD.spellData.spec.power.pos.x, iCD.spellData.spec.power.pos.y)
 		else
-			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -1080, -150)
+			iCD.powerText:SetPoint(iCD.setups.power.position.from, UIParent, iCD.setups.power.position.to, iCD.setups.power.position.x, iCD.setups.power.position.y)
 		end
 		iCD.powerFunc = iCD.spellData.spec.power.func
 		--addon:RegisterUnitEvent('UNIT_POWER', 'player')
@@ -1795,7 +1795,7 @@ function addon:PLAYER_SPECIALIZATION_CHANGED()
 		if iCD.spellData.spec.power.pos then
 			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD.spellData.spec.power.pos.x, iCD.spellData.spec.power.pos.y)
 		else
-			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', -1080, -150)
+			iCD.powerText:SetPoint(iCD.setups.power.position.from, UIParent, iCD.setups.power.position.to, iCD.setups.power.position.x, iCD.setups.power.position.y)
 		end
 		iCD.powerFunc = iCD.spellData.spec.power.func
 		--addon:RegisterUnitEvent('UNIT_POWER', 'player')
@@ -1903,7 +1903,7 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
 			elseif spellID == 206931 then -- DK, Blooddrinker
 				iCD.customSpellTimers[spellID] = GetTime() + 30
 			elseif spellID == 43265 then -- DK, DnD
-				iCD.customSpellTimers[spellID] = GetTime() + (iCD.specID == 252 and 30 or 15)
+				iCD.customSpellTimers[spellID] = GetTime() + (iCD.specID == 250 and 15 or 30)
 			elseif spellID == 55233 then -- Vampiric Blood
 				iCD.customSpellTimers[spellID] = 0
 			elseif spellID == 26573 then -- Paladin, Conce

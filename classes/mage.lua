@@ -27,10 +27,6 @@ function iCD:MAGE(specID)
 			range = 'Arcane Blast',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
@@ -130,10 +126,6 @@ function iCD:MAGE(specID)
 			range = 'Fireball',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
@@ -252,10 +244,6 @@ function iCD:MAGE(specID)
 			range = 'Frostbolt',
 		}
 		t.power = {
-			pos = {
-				x = -990,
-				y = -8,
-			},
 			func = function()
 				return math.floor((UnitPower('player', 0)/UnitPowerMax('player', 0))*100)
 			end,
