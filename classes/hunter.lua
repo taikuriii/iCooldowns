@@ -37,14 +37,8 @@ function iCD:HUNTER(specID)
 		}
 		-- Row 1
 		t.row1 = {
-			[34026] = { -- Kill Command
-				order = 5,
-				range = true,
-				cost = true,
-				showTimeAfterGCD = true,
-			},
 			[217200] = { -- Barbed Shot
-				order = -1,
+				order = 2,
 				range = true,
 				cost = true,
 				charges = true,
@@ -53,8 +47,24 @@ function iCD:HUNTER(specID)
 				glowSound = true,
 				showTimeAfterGCD = true,
 			},
+			[34026] = { -- Kill Command
+				order = 5,
+				range = true,
+				cost = true,
+				showTimeAfterGCD = true,
+			},
+			[53351] = { -- Kill Shot
+				order = 7,
+				range = true,
+				cost = true,
+				customCost = function()
+					local isUsable = IsUsableSpell("Kill Shot")
+					return not isUsable
+				end,
+				showTimeAfterGCD = true,
+			},
 			[53209] = { -- Chimaera Shot
-				order = 3,
+				order = 10,
 				range = true,
 				showTimeAfterGCD = true,
 				showFunc = function()
@@ -62,7 +72,7 @@ function iCD:HUNTER(specID)
 				end,
 			},
 			[120679] = { -- Dire Beast
-				order = 4,
+				order = 14,
 				range = true,
 				charges = true,
 				stack = true,
@@ -71,7 +81,7 @@ function iCD:HUNTER(specID)
 				end,
 			},
 			[131894] = { -- A Murder of Crows
-				order = 6,
+				order = 18,
 				range = true,
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 3, 1))
