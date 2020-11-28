@@ -371,6 +371,12 @@ function iCD:MAGE(specID)
 				order = 10,
 				ignoreGCD = true,
 			},
+			[116011] = { -- Rune of Power
+				order = 4,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+			},
 		}
 
 		t.row4 = { -- Blink

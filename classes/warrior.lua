@@ -274,7 +274,7 @@ function iCD:WARRIOR(specID)
 			end,
 		}
 		t.row1 = {
-			[5308] = { -- Execute
+			[280735] = { -- Execute
 				order = 1,
 				glow = true,
 				range = true,
@@ -362,6 +362,10 @@ function iCD:WARRIOR(specID)
 			},
 			[184364] = { -- Enraged Regeneration
 				order = 11,
+				ignoreGCD = true,
+			},
+			[23920] = { -- Spell Reflection
+				order = 6,
 				ignoreGCD = true,
 			},
 		}

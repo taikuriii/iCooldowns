@@ -3,7 +3,13 @@ function iCD:DEMONHUNTER(specID)
 	local temp = {}
 	temp.spec = {}
 	temp.all = {}
-	temp.all.row1 = {}
+	temp.all.row1 = {
+		[306830] = { -- Elysian Decree
+			order = 99999, -- Always last
+			showTimeAfterGCD = true,
+			covenant = iCD.covenants.KYRIAN
+		},
+	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
 	temp.all.row4 = {}
@@ -50,10 +56,7 @@ function iCD:DEMONHUNTER(specID)
 				showTimeAfterGCD = true,
 			},
 			[258920] = { -- Immolation Aura
-				order = 3,
-				showFunc = function()
-					return select(4, GetTalentInfo(2, 3, 1))
-				end,
+				order = 6,
 				stack = true,
 				stackFunc = function()
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Immolation Aura')
@@ -67,16 +70,24 @@ function iCD:DEMONHUNTER(specID)
 				showTimeAfterGCD = true,
 
 			},
+			[342817] = { -- Glaive Tempest
+				order = 5,
+				showTimeAfterGCD = true,
+				cost = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(3, 3, 1))
+				end,
+			},
 			[258925] = { -- Fel Barrage
 				order = 8,
 				showTimeAfterGCD = true,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(3, 3, 1))
+					return select(4, GetTalentInfo(7, 3, 1))
 				end,
 			},
 			[232893] = { -- Felblade
-				order = 5,
+				order = 7,
 				range = true,
 				glow = true,
 				glowSound = true,
@@ -103,13 +114,6 @@ function iCD:DEMONHUNTER(specID)
 			},
 		}
 		t.row2 = {
-			[206491] = { -- Nemesis
-				order = 3,
-				range = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
-				end,
-			},
 			[191427] = { -- Metamorphosis
 				order = 5,
 			},
@@ -145,48 +149,6 @@ function iCD:DEMONHUNTER(specID)
 		},
 		}
 		t.buffsC = {
-			[208579] = { -- Nemesis
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-				stack = '+D',
-			},
-			[208605] = { -- Nemesis (Humanoid)
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-				stack = '+D',
-			},
-			[208611] = { -- Nemesis (Elemental)
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-				stack = '+D',
-			},
-			[208613] = { -- Nemesis (Mechanical)
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-				stack = '+D',
-			},
-			[208614] = { -- Nemesis (Undead)
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-				stack = '+D',
-			},
-			[208608] = { -- Nemesis (Beast)
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 3, 1))
-				end,
-				stack = '+D',
-			},
-			[208628] = { -- Momentum
-				showFunc = function()
-					return select(4, GetTalentInfo(7, 2, 1))
-				end,
-				stack = '+D',
-			},
 			[212800] = { -- Blur
 				stack = '-DT',
 			},

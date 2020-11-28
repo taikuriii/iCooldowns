@@ -276,7 +276,7 @@ function iCD:SHAMAN(specID)
 				glow = true,
 				glowSound = true
 			},
-				[188838] = { -- Flame Shock
+			[188838] = { -- Flame Shock
 				order = 4,
 				range = true,
 				cost = true,

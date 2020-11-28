@@ -20,8 +20,8 @@ function iCD:HUNTER(specID)
 	t.buffsI = {}
 	if specID == 253 then --Beastmastery
 		iCD.outOfRangeSpells = {
-			main = 'Cobra Shot',
-			range = 'Cobra Shot',
+			main = 'Tranquilizing Shot',
+			range = 'Tranquilizing Shot',
 		}
 		t.power = {
 			func = function()

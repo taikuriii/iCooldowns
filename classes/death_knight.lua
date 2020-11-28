@@ -66,6 +66,11 @@ function iCD:DEATHKNIGHT(specID)
 			ignoreGCD = true,
 			level = 33,
 		},
+		[327574] = { -- Sacrifical Pact
+			order = 11,
+			level = 54,
+			cost = true,
+		},
 	}
 	temp.all.row3 = {}
 	temp.all.row4 = {
@@ -433,7 +438,7 @@ function iCD:DEATHKNIGHT(specID)
 					glow = true,
 					glowSound = true,
 				},
-				[130736] = { -- Soul Reaper
+				[343294] = { -- Soul Reaper
 					range = true,
 					order = 2,
 					showFunc = function()
@@ -454,7 +459,7 @@ function iCD:DEATHKNIGHT(specID)
 				[207289] = { -- Unholy Frenzy
 					order = 3,
 					showFunc = function()
-						return select(4, GetTalentInfo(7, 2, 1))
+						return select(4, GetTalentInfo(7, 3, 1))
 					end,
 				},
 				[42650] = { -- Army of the Dead
@@ -494,7 +499,12 @@ function iCD:DEATHKNIGHT(specID)
 				},
 				[207289] = { -- Unholy Frenzy
 					showFunc = function()
-						return select(4, GetTalentInfo(7, 2, 1))
+						return select(4, GetTalentInfo(7, 3, 1))
+					end,
+				},
+				[343294] = { -- Soul Reaper
+					showFunc = function()
+						return select(4, GetTalentInfo(4, 3, 1))
 					end,
 				},
 				[63560] = { -- Dark Transformation

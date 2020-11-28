@@ -38,6 +38,7 @@ local roles = {
 	[270] = 2, -- Mistweaver Monk
 }
 local _, iCD = ...
+
 function iCD:GetGenerals(specID)
 	--iCD.general = {
 		local currentRole = roles[specID] or 3
@@ -136,19 +137,25 @@ function iCD:GetGenerals(specID)
 				showFunc = function() return iCD:Essences(14, true) end,
 				showTimeAfterGCD = true,
 			},
-			[205752] = { -- Blood Fury
-				order = -1,
-				showFunc = function()
-					local _, race = UnitRace('player')
-					return race == 'Orc'
-				end,
-			},
 			[26297] = { -- Berserking
 				order = -1,
 				showFunc = function()
 					local _, race = UnitRace('player')
 					return race == 'Troll'
 				end,
+			},
+			[310143] = { -- Soulshape
+				order = 9999, -- Always last
+				covenant = iCD.covenants.NIGHTFAE,
+				icon = 3586268,
+			},
+			[300728] = { -- Door of Shadows
+				order = 9999, -- Always last
+				covenant = iCD.covenants.VENTHYR,
+			},
+			[324631] = { -- Fleshcraft
+				order = 9999, -- Always last
+				covenant = iCD.covenants.NECROLORD,
 			},
 		}
 		if currentRole ~= 1 then
@@ -184,6 +191,9 @@ function iCD:GetGenerals(specID)
 		end
 		t.row3 = {}
 		t.row4 = {
+			[324701] = { -- Flicker (Soul shape teleport)
+				covenant = iCD.covenants.NIGHTFAE,
+			},
 			[155145] = { -- Arcane Torrent
 				showFunc = function()
 					local _, race = UnitRace('player')
@@ -317,8 +327,15 @@ function iCD:GetGenerals(specID)
 			[-86125] = { -- Greater Holy Protection Potion (DPS potion)
 				utility = true,
 			},
+			[-109076] = { -- Goblin Glider Kit
+				utility = true,
+			}
 		}
 		t.row5 = { -- Buffs
+			[310143] = { -- Soulshape
+				covenant = iCD.covenants.NIGHTFAE,
+				icon = 3586269,
+			},
 			[1022] = {}, -- Blessing of Protection
 			[204018] = {}, -- Blessing of Spellwarding
 			[6940] = {}, -- Blessing of Sacrifice

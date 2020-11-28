@@ -5,6 +5,7 @@
 ## Version: 1.0
 ## DefaultState: enabled
 
+enums.lua
 classes\death_knight.lua
 classes\demon_hunter.lua
 classes\druid.lua

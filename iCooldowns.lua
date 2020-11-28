@@ -48,6 +48,9 @@ local buffFrames = {
 	['buffsI'] = true,
 	['buffsC'] = true,
 }
+-- Covenant stuff
+local currentCovenant = 0
+
 --APIs to locals
 local IsItemInRange = IsItemInRange
 local IsSpellInRange = IsSpellInRange
@@ -96,6 +99,8 @@ end
 
 
 function iCD:Essences(essenceID, major, minRank)
+	return false
+	--[[
 	if major then
 			if minRank then
 				return iCD.currentEssences.major[1] == essenceID and iCD.currentEssences.major[2] >= minRank
@@ -104,6 +109,7 @@ function iCD:Essences(essenceID, major, minRank)
 	else
 		return minRank and (iCD.currentEssences.minor[essenceID] and iCD.currentEssences.minor[essenceID] >= minRank) or iCD.currentEssences.minor[essenceID]
 	end
+	--]]
 end
 local _auras = {
 	playerBuffs = {},
@@ -140,8 +146,18 @@ function iCD.UnitBuff(target,buffName,castByPlayer)
 	return
 end
 
-function iCD.UnitDebuff(buffName, target, castByPlayer)
+function iCD.UnitDebuff(target, buffName, castByPlayer)
 	if not target or target:lower() == "target" then
+		if not iCD.hasTargetDebuffs then
+			iCD.hasTargetDebuffs = true
+			for i = 1, 129 do -- Debuffs
+				local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID,canApplyAura,isBossDebuff, castByPlayer, nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, castByPlayer and 'player')
+				if not name then return end
+				if buffName == name then
+					return count, duration, expirationTime, value1, value2, value3
+				end
+			end
+		end
 		for k,v in pairs(_auras.targetDebuffs) do
 			if v[1] == buffName then
 				if not castByPlayer or (castByPlayer and v[13]) then
@@ -151,7 +167,7 @@ function iCD.UnitDebuff(buffName, target, castByPlayer)
 		end
 	else
 		for i = 1, 129 do -- Debuffs
-			local name, icon, count, debuffType, duration, expirationTime, _, _, _, spellID,canApplyAura,isBossDebuff, castByPlayer, nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, castByPlayer and 'player')
+			local name, icon, count, debuffType, duration, expirationTime, sourceUnit, _, _, spellID,canApplyAura,isBossDebuff, castByPlayer, nameplateShowAll,timeMod,value1,value2,value3 = UnitDebuff((target and target or 'target'), i, castByPlayer and 'player')
 			if not name then return end
 			if buffName == name then
 				return count, duration, expirationTime, value1, value2, value3
@@ -906,10 +922,10 @@ function iCD:updateCDs()
 			--iCD.frames.row4[id].data.item = true
 			local itemName,_,_,_,_,_,_,_,_,icon = GetItemInfo(-k)
 			iCD.frames.row4[id].data.spellName = itemName
-			iCD.frames.row4[id].tex:SetTexture(icon)
+			iCD.frames.row4[id].tex:SetTexture(v.icon or icon)
 		else
 			iCD.frames.row4[id].data.spellName = GetSpellInfo(k)
-			iCD.frames.row4[id].tex:SetTexture(GetSpellTexture(k))
+			iCD.frames.row4[id].tex:SetTexture(v.icon or GetSpellTexture(k))
 		end
 		if v.stackFunc then
 			iCD.frames.row4[id].data.stackFunc = v.stackFunc
@@ -1040,7 +1056,7 @@ function iCD:updateBuffs()
 				if iCD.buffs[spellID] then
 					local data = {
 						endTime = expirationTime,
-						texture = icon,
+						texture = iCD.buffs[spellID].icon or icon,
 					}
 					if iCD.buffs[spellID].stack then
 						if iCD.buffs[spellID].stackFunc then
@@ -1256,7 +1272,7 @@ function iCD:updateBuffs()
 		if v.customText then
 			iCD.frames.row5[id].data.customText = v.customText
 		end
-		iCD.frames.row5[id].tex:SetTexture(GetSpellTexture(k))
+		iCD.frames.row5[id].tex:SetTexture(v.icon or GetSpellTexture(k))
 		iCD.frames.row5[id].tex:SetVertexColor(1,1,1,1)
 		iCD.frames.row5[id].data.unMod = 'none'
 		iCD.frames.row5[id]:Show()
@@ -1284,7 +1300,7 @@ function iCD:updateBuffs()
 		if v.customText then
 			iCD.frames.buffsI[id].data.customText = v.customText
 		end
-		iCD.frames.buffsI[id].tex:SetTexture(GetSpellTexture(k))
+		iCD.frames.buffsI[id].tex:SetTexture(v.icon or GetSpellTexture(k))
 		iCD.frames.buffsI[id].tex:SetVertexColor(1,1,1,1)
 		iCD.frames.buffsI[id].data.unMod = 'none'
 		iCD.frames.buffsI[id]:Show()
@@ -1313,7 +1329,7 @@ function iCD:updateBuffs()
 		if v.customText then
 			iCD.frames.buffsC[id].data.customText = v.customText
 		end
-		iCD.frames.buffsC[id].tex:SetTexture(GetSpellTexture(k))
+		iCD.frames.buffsC[id].tex:SetTexture(v.icon or GetSpellTexture(k))
 		iCD.frames.buffsC[id].tex:SetVertexColor(1,1,1,1)
 		iCD.frames.buffsC[id].data.unMod = 'none'
 		iCD.frames.buffsC[id]:Show()
@@ -1348,6 +1364,7 @@ function iCD:updateBuffList()
 		if v.azerite then
 			if not currentAzeritePowers[v.azerite] then return end
 		end
+		if v.covenant and v.covenant ~= currentCovenant then return end
 		if v.debuff then
 			d[spellID] = v
 			iCD.hasTargetDebuffs = true
@@ -1417,6 +1434,7 @@ function iCD:UpdateSkills()
 	local temp = {row1 = {}, row2 = {}, row3 = {}}
 	local function add(k,v, row)
 		if v.level and v.level > iCD.level then return end
+		if v.covenant and v.covenant ~= currentCovenant then return end
 		if not v.showFunc or (v.showFunc and v.showFunc()) then
 			temp[row][k] = v
 		end
@@ -1504,6 +1522,9 @@ function iCD:UpdateSkills()
 					iCD.frames[row][id].data.cost = true
 				end
 			end
+			if v.icon then
+				iCD.frames[row][id].data.icon = true
+			end
 			if v.ignoreGCD then
 				iCD.frames[row][id].data.ignoreGCD = true
 			end
@@ -1541,7 +1562,7 @@ function iCD:UpdateSkills()
 			--if v.customColor then
 			--	iCD.frames[row][id].data.customColor = v.customColor
 			--end
-			iCD.frames[row][id].tex:SetTexture(GetSpellTexture(k))
+			iCD.frames[row][id].tex:SetTexture(v.icon or GetSpellTexture(k))
 			iCD.frames[row][id].tex:SetVertexColor(1,1,1,1)
 			iCD.frames[row][id].data.unMod = 'none'
 			--Re center
@@ -1681,9 +1702,10 @@ addon:RegisterEvent('PLAYER_LEVEL_CHANGED')
 addon:RegisterEvent('PLAYER_LEVEL_UP')
 addon:RegisterEvent('UNIT_AURA')
 addon:RegisterEvent('PLAYER_TARGET_CHANGED')
-addon:RegisterEvent('AZERITE_EMPOWERED_ITEM_SELECTION_UPDATED')
-addon:RegisterEvent('AZERITE_ESSENCE_CHANGED')
-addon:RegisterEvent('AZERITE_ESSENCE_UPDATE')
+--addon:RegisterEvent('AZERITE_EMPOWERED_ITEM_SELECTION_UPDATED')
+--addon:RegisterEvent('AZERITE_ESSENCE_CHANGED')
+--addon:RegisterEvent('AZERITE_ESSENCE_UPDATE')
+addon:RegisterEvent('COVENANT_CHOSEN')
 addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_ABSORB_AMOUNT_CHANGED', 'player')
 addon:RegisterUnitEvent('UNIT_HEAL_ABSORB_AMOUNT_CHANGED', 'player')
@@ -1738,6 +1760,7 @@ function addon:PLAYER_LOGIN()
 	iCD.specID = GetSpecializationInfo(GetSpecialization())
 	iCD.spellData = iCD[iCD.class](nil, iCD.specID)
 	iCD.level = UnitLevel('player')
+	currentCovenant = C_Covenants.GetActiveCovenantID()
 	UpdateAzeritePowers()
 	--ICDTEST = iCD.spellData
 	iCD:UpdateSkills()
@@ -1756,6 +1779,9 @@ function addon:PLAYER_LOGIN()
 			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD.spellData.spec.power.pos.x, iCD.spellData.spec.power.pos.y)
 		else
 			iCD.powerText:SetPoint(iCD.setups.power.position.from, UIParent, iCD.setups.power.position.to, iCD.setups.power.position.x, iCD.setups.power.position.y)
+		end
+		if iCD.spellData.spec.power.fontSize then
+			iCD.powerText:SetFont(iCD.font, iCD.spellData.spec.power.fontSize, 'OUTLINE')
 		end
 		iCD.powerFunc = iCD.spellData.spec.power.func
 		--addon:RegisterUnitEvent('UNIT_POWER', 'player')
@@ -1796,6 +1822,11 @@ function addon:PLAYER_SPECIALIZATION_CHANGED()
 			iCD.powerText:SetPoint('BOTTOMRIGHT', UIParent, 'CENTER', iCD.spellData.spec.power.pos.x, iCD.spellData.spec.power.pos.y)
 		else
 			iCD.powerText:SetPoint(iCD.setups.power.position.from, UIParent, iCD.setups.power.position.to, iCD.setups.power.position.x, iCD.setups.power.position.y)
+		end
+		if iCD.spellData.spec.power.fontSize then
+			iCD.powerText:SetFont(iCD.font, iCD.spellData.spec.power.fontSize, 'OUTLINE')
+		else
+			iCD.powerText:SetFont(iCD.font, iCD.setups.power.fontSize, 'OUTLINE')
 		end
 		iCD.powerFunc = iCD.spellData.spec.power.func
 		--addon:RegisterUnitEvent('UNIT_POWER', 'player')
@@ -1902,12 +1933,16 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
 				iCD:addToRow4(spellID, false, 60)
 			elseif spellID == 206931 then -- DK, Blooddrinker
 				iCD.customSpellTimers[spellID] = GetTime() + 30
-			elseif spellID == 43265 then -- DK, DnD
-				iCD.customSpellTimers[spellID] = GetTime() + (iCD.specID == 250 and 15 or 30)
+			elseif spellID == 43265 or spellID == 324128 then -- DK, DnD
+				iCD.customSpellTimers[43265] = GetTime() + (iCD.specID == 250 and 15 or 30)
 			elseif spellID == 55233 then -- Vampiric Blood
 				iCD.customSpellTimers[spellID] = 0
 			elseif spellID == 26573 then -- Paladin, Conce
 				iCD.customSpellTimers[spellID] = GetTime() + 12
+			elseif spellID == 202770 then
+				iCD.customSpellTimers[spellID] = GetTime() + 8
+			elseif spellID == 316958 then -- Paladin, Ashen Hallow
+				iCD.customSpellTimers[spellID] = GetTime() + 30
 			end
 		elseif event == 'SPELL_PERIODIC_DAMAGE' then
 			if spellID == 55078 then
@@ -1952,6 +1987,10 @@ end
 function addon:PLAYER_LEVEL_UP()
 	--iCD.level = UnitLevel('player')
 	--addon:PLAYER_SPECIALIZATION_CHANGED()
+end
+function addon:COVENANT_CHOSEN()
+	currentCovenant = C_Covenants.GetActiveCovenantID()
+	addon:PLAYER_SPECIALIZATION_CHANGED()
 end
 --------------------
 ---NAMEPLATE-RANGE--
@@ -2121,6 +2160,37 @@ SlashCmdList["ICD"] = function(msg)
 		UpdateAzeritePowers()
 		addon:PLAYER_SPECIALIZATION_CHANGED()
 		if IroniStreamIconsUpdate then IroniStreamIconsUpdate() else print("Error: Addon isn't enabled") end
+		return
+	elseif msg == "removed" then
+		local general = iCD:GetGenerals(iCD.specID)
+		for row,v in pairs(general) do
+			for id, _ in pairs(v) do
+				if id > 0 then
+					if not C_Spell.DoesSpellExist(id) then
+						print(string.format("Missing (General) - row: %s, %s", row, id))
+					end
+				elseif not C_Item.DoesItemExistByID(id*-1) then
+					print(string.format("Missing (General) - row: %s, %s", row, id))
+				end
+			end
+		end
+		local class = iCD[iCD.class](nil, iCD.specID)
+		for _type, _v in pairs(class) do
+			for row, v in pairs(_v) do
+				if row ~= "power" then
+					for id, _ in pairs(v) do
+						if not tonumber(id) then print(id) end
+						if id > 0 then
+							if not C_Spell.DoesSpellExist(id) then
+								print(string.format("Missing (Class) - %s - row: %s, %s", _type, row, id))
+							end
+						elseif not C_Item.DoesItemExistByID(id*-1) then
+							print(string.format("Missing (Class) - %s - row: %s, %s", _type, row, id))
+						end
+					end
+				end
+			end
+		end
 		return
 	end
 	for k in pairs(currentAzeritePowers) do
