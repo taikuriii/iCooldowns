@@ -3,7 +3,13 @@ function iCD:HUNTER(specID)
 	local temp = {}
 	temp.spec = {}
 	temp.all = {}
-	temp.all.row1 = {}
+	temp.all.row1 = {
+		[328231] = { -- Wild Spirits
+			order = 9999,
+			showTimeAfterGCD = true,
+			covenant = iCD.covenants.NIGHTFAE,
+		},
+	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
 	temp.all.row4 = {}
@@ -62,6 +68,7 @@ function iCD:HUNTER(specID)
 					return not isUsable
 				end,
 				showTimeAfterGCD = true,
+				glow = true,
 			},
 			[53209] = { -- Chimaera Shot
 				order = 10,

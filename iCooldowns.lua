@@ -41,6 +41,7 @@ iCD.DebuffsI = {}
 iCD.DebuffsC = {}
 iCD.spells = {}
 iCD.extras = {}
+iCD.soulbinds = {}
 iCD.currentEssences = {major = {0,0}, minor = {}}
 local currentAzeritePowers = {}
 local buffFrames = {
@@ -97,7 +98,9 @@ local function UpdateAzeritePowers()
 	end
 end
 
-
+function iCD:Soulbinds(id)
+	return iCD.soulbinds[id]
+end
 function iCD:Essences(essenceID, major, minRank)
 	return false
 	--[[
@@ -121,7 +124,7 @@ function iCD.UnitBuff(target,buffName,castByPlayer)
 	if target:lower() == "player" then
 		for k,v in pairs(_auras.playerBuffs) do
 			if v[1] == buffName then
-				if not castByPlayer or (castByPlayer and v[13]) then
+				if not castByPlayer or (castByPlayer and v[7] == 'player') then
 					return v[3], v[5], v[6], v[16], v[17], v[18]
 				end
 			end
@@ -129,7 +132,7 @@ function iCD.UnitBuff(target,buffName,castByPlayer)
 	elseif target:lower() == "pet" then
 		for k,v in pairs(_auras.petBuffs) do
 			if v[1] == buffName then
-				if not castByPlayer or (castByPlayer and v[13]) then
+				if not castByPlayer or (castByPlayer and v[7] == 'player') then
 					return v[3], v[5], v[6], v[16], v[17], v[18]
 				end
 			end
@@ -160,7 +163,7 @@ function iCD.UnitDebuff(target, buffName, castByPlayer)
 		end
 		for k,v in pairs(_auras.targetDebuffs) do
 			if v[1] == buffName then
-				if not castByPlayer or (castByPlayer and v[13]) then
+				if not castByPlayer or (castByPlayer and v[7] == 'player') then
 					return v[3], v[5], v[6], v[16], v[17], v[18]
 				end
 			end
@@ -687,7 +690,7 @@ function iCD:updateFrame(id, row)
 				end
 				local cdD = s+cd-GetTime()
 				if s > 0 then
-					if data.ignoreGCD then
+					if data.ignoreGCD or data.item then
 						text = cdD
 					else
 						--local gS, gcdD = GetSpellCooldown(iCD.gcd)
@@ -877,6 +880,7 @@ function iCD:updateCDs()
 	end
 	for k,v in pairs(iCD.onCD) do
 		local s, cd
+		local isItem = false
 		if v.charges then
 			local c,m,sd,d = GetSpellCharges(k)
 			if c == m then
@@ -888,13 +892,14 @@ function iCD:updateCDs()
 			end
 		elseif k < 0 then
 			s, cd = GetItemCooldown(-k)
+			isItem = true
 		else
 			s,cd = GetSpellCooldown(k)
 		end
 		local cdD = s+cd-GetTime()
 		local dura = 0
 		if s > 0 then
-			if v.ignoreGCD then
+			if isItem or v.ignoreGCD then
 				dura = cdD
 			else
 				local gS, gcdD = GetSpellCooldown(iCD.gcd)
@@ -1196,9 +1201,9 @@ function iCD:updateBuffs()
 			if not t[1] then
 				break
 			else
-				local name, icon, count, duration, expirationTime, spellID, castByPlayer = t[1], t[2], t[3], t[5], t[6], t[10], t[13]
+				local name, icon, count, duration, expirationTime, source, spellID = t[1], t[2], t[3], t[5], t[6], t[7], t[10]
 				_auras.targetDebuffs[i] = t
-				if castByPlayer then
+				if source and source == 'player' then
 					if iCD.debuffs[spellID] then
 						local data = {
 							endTime = expirationTime,
@@ -1430,6 +1435,22 @@ function iCD:updateBuffList()
 end
 function iCD:UpdateSkills()
 	iCD:resetGlows()
+	iCD.soulbinds = {}
+	local soulbindID = C_Soulbinds.GetActiveSoulbindID()
+	do
+		if soulbindID and soulbindID ~= 0 then
+			local s = C_Soulbinds.GetSoulbindData(soulbindID)
+			for _,d in pairs(s.tree.nodes) do
+				if d.state == 3 then -- selected
+					if d.conduitID ~= 0 then
+						iCD.soulbinds[d.conduitID] = true
+					else
+						iCD.soulbinds[d.ID] = true
+					end
+				end
+			end
+		end
+	end
 	iCD.general = iCD:GetGenerals(iCD.specID)
 	local temp = {row1 = {}, row2 = {}, row3 = {}}
 	local function add(k,v, row)
@@ -1462,6 +1483,7 @@ function iCD:UpdateSkills()
 			end
 		end
 	end
+
 	--iCD.gcd = iCD[iCD.class][iCD.specID].gcd
 	iCD.gcd = 61304
 	for row,t in pairs(iCD.spellData.spec) do
@@ -1705,6 +1727,8 @@ addon:RegisterEvent('PLAYER_TARGET_CHANGED')
 --addon:RegisterEvent('AZERITE_EMPOWERED_ITEM_SELECTION_UPDATED')
 --addon:RegisterEvent('AZERITE_ESSENCE_CHANGED')
 --addon:RegisterEvent('AZERITE_ESSENCE_UPDATE')
+addon:RegisterEvent('SOULBIND_ACTIVATED')
+addon:RegisterEvent('SOULBIND_PATH_CHANGED')
 addon:RegisterEvent('COVENANT_CHOSEN')
 addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_ABSORB_AMOUNT_CHANGED', 'player')
@@ -1939,10 +1963,12 @@ function addon:COMBAT_LOG_EVENT_UNFILTERED()
 				iCD.customSpellTimers[spellID] = 0
 			elseif spellID == 26573 then -- Paladin, Conce
 				iCD.customSpellTimers[spellID] = GetTime() + 12
-			elseif spellID == 202770 then
+			elseif spellID == 202770 then -- Druid, Fury of Elune
 				iCD.customSpellTimers[spellID] = GetTime() + 8
 			elseif spellID == 316958 then -- Paladin, Ashen Hallow
 				iCD.customSpellTimers[spellID] = GetTime() + 30
+			elseif spellID == 311648 then -- DK, Swarming Mist
+				iCD.customSpellTimers[spellID] = GetTime() + 60
 			end
 		elseif event == 'SPELL_PERIODIC_DAMAGE' then
 			if spellID == 55078 then
@@ -1988,9 +2014,11 @@ function addon:PLAYER_LEVEL_UP()
 	--iCD.level = UnitLevel('player')
 	--addon:PLAYER_SPECIALIZATION_CHANGED()
 end
-function addon:COVENANT_CHOSEN()
-	currentCovenant = C_Covenants.GetActiveCovenantID()
-	addon:PLAYER_SPECIALIZATION_CHANGED()
+function addon:SOULBIND_ACTIVATED()
+	iCD:UpdateSkills()
+end
+function addon:SOULBIND_PATH_CHANGED()
+	iCD:UpdateSkills()
 end
 --------------------
 ---NAMEPLATE-RANGE--
@@ -2208,6 +2236,25 @@ SlashCmdList["ICD"] = function(msg)
 			end
 		end
 	end
+	local soulbindID = C_Soulbinds.GetActiveSoulbindID()
+	print("Soulbinds/Conduits:")
+	do
+		if soulbindID and soulbindID ~= 0 then
+			local s = C_Soulbinds.GetSoulbindData(soulbindID)
+			for _,d in pairs(s.tree.nodes) do
+				if d.state == 3 then -- selected
+					if d.conduitID ~= 0 then
+						local c = C_Soulbinds.GetConduitCollectionData(d.conduitID)
+						local n = GetItemInfo(c.conduitItemID)
+						print(n, d.conduitID)
+					else
+						local n = GetSpellInfo(d.spellID)
+						print(n, d.ID)
+					end
+				end
+			end
+		end
+	end
 end
 --[=[
 function IANTORUS()
@@ -2270,3 +2317,5 @@ end
 --/script local t = GetItemStats(select(7,EJ_GetLootInfoByIndex(60))); for k,v in pairs(t) do print(k,v) end
 --/script local s = 'Fire Artifact Relic';if s:find('Relic') then local t=s:match('%a+') print(t) else print('f') end
 --=JOIN(",",FILTER('['&D3:L25&']='&L3:L25, NOT(ISBLANK(L3:L25))))
+
+

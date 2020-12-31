@@ -24,6 +24,12 @@ function iCD:PALADIN(specID)
 					return ''
 				end
 			end,
+		},
+		[304971] = { -- Divine Toll
+			order = 99999, -- Always last
+			covenant = iCD.covenants.KYRIAN,
+			range = true,
+			showTimeAfterGCD = true,
 		}
 	}
 	temp.all.row2 = {
@@ -275,8 +281,15 @@ function iCD:PALADIN(specID)
 			range = "Avenger's Shield",
 		}
 		t.power = {
+			pos = {
+				from = "bottomright",
+      	to = "center",
+      	x = -45,
+				y = -83
+			},
+			fontSize = 12,
 			func = function()
-				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0))*100
+				return math.floor(UnitPower('player', 0)/UnitPowerMax('player', 0)*100)
 			end,
 		}
 		t.row1 = {
@@ -354,6 +367,13 @@ function iCD:PALADIN(specID)
 				order = 20,
 				range = true,
 				showTimeAfterGCD = true,
+				cost = true,
+				customCost = function()
+					local isUsable = IsUsableSpell("Hammer of Wrath")
+					if not isUsable then
+						return true
+					end
+				end,
 			},
 		}
 		t.row2 = {
@@ -433,6 +453,9 @@ function iCD:PALADIN(specID)
 			}, -- Seraphim
 			[132403] = {}, -- Shield of the Righteous
 			[280375] = {}, -- Redoubt
+			[182104] = { -- Shining Light
+				stack = true,
+			},
 		}
 		t.buffsC = {
 			[152262] = { -- Seraphim

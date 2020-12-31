@@ -47,6 +47,43 @@ function iCD:DEATHKNIGHT(specID)
 				level = 3,
 				--showTimeAfterGCD = true,
 			},
+			[311648] = {
+				order = 1e4,
+				cost = true,
+				covenant = iCD.covenants.VENTHYR,
+				customText = function()
+					if iCD.customSpellTimers[311648] then
+						local s,d = GetSpellCooldown(311648)
+						if s == 0 then
+							return ''
+						end
+						local dura =  iCD.customSpellTimers[311648] - GetTime()
+						if dura <= 0 then
+							return ' '
+						elseif dura > 5 then
+							return dura,'%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
+				stack = true,
+				stackFunc = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Swarming Mist')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura,'%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end
+			},
 	}
 	temp.all.row2 = {
 		[48707] = { -- Anti-Magic Shell
@@ -82,7 +119,6 @@ function iCD:DEATHKNIGHT(specID)
 			charges = function() return iCD:Essences(32, true) end
 		},
 		[48265] = {}, -- Death's Advance
-		[46585] = {}, -- Raise Dead
 	}
 	temp.all.row5 = {
 		[48707] = { -- Anti-Magic Shell
@@ -97,13 +133,13 @@ function iCD:DEATHKNIGHT(specID)
 			end,
 		},
 		[48792] = {}, -- Icebound Fortitude
+		[49039] = {}, -- Lichborne
 	}
 	temp.all.buffsC = {}
 	temp.all.buffsI = {
 		[326918] = { -- Rune of Hysteria
 			stack = "+RP",
 		},
-		[49039] = {}, -- Lichborne
 		[48265] = {}, -- Death's Advance
 	}
 	t.row1 = {}
@@ -162,6 +198,16 @@ function iCD:DEATHKNIGHT(specID)
 					return select(4, GetTalentInfo(2, 3, 1))
 				end,
 			},
+			[194844] = { -- Bonestorm
+				order = 25,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 3, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
+			[46585] = {  -- Raise Dead
+				order = 1e5,
+			},
 		}
 		t.row2 = {
 			[194679] = { -- Rune Tap
@@ -187,13 +233,7 @@ function iCD:DEATHKNIGHT(specID)
 				range = true,
 				level = 34,
 			},
-			[194844] = { -- Bonestorm
-				order = 25,
-				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
-				end,
-				showTimeAfterGCD = true,
-			},
+
 		}
 		t.row4 = {
 			[221562] = {}, -- Asphyxiate
@@ -437,6 +477,11 @@ function iCD:DEATHKNIGHT(specID)
 					order = 1,
 					glow = true,
 					glowSound = true,
+					stack = true,
+					stackFunc = function()
+						local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff("player", "Sudden Doom")
+						return count or " "
+					end,
 				},
 				[343294] = { -- Soul Reaper
 					range = true,
@@ -449,10 +494,17 @@ function iCD:DEATHKNIGHT(specID)
 					range = true,
 					order = 4,
 				},
-
 				[275699] = { --Apocalypse
 					range = true,
 					order = 5,
+				},
+				[115989] = { -- Unholy Blight
+					range = true,
+					order = 10,
+					showFunc = function()
+						return select(4, GetTalentInfo(2, 3, 1))
+					end,
+					cost = true,
 				},
 			}
 			t.row2 = {
@@ -480,6 +532,7 @@ function iCD:DEATHKNIGHT(specID)
 				},
 				[47481] = {}, -- Gnaw (pet)
 				[47482] = {}, -- Leap (pet)
+				[46585] = {},  -- Raise Dead
 			}
 			t.buffsC = {
 				[274373] = { -- Festermight (trait)

@@ -9,7 +9,12 @@ function iCD:DRUID(specID)
 			showTimeAfterCast = true,
 			range = true,
 			covenant = iCD.covenants.NECROLORD
-		}
+		},
+		[323764] = { -- Concoke the Spirits
+			order = 999999, -- Always last
+			showTimeAfterCast = true,
+			covenant = iCD.covenants.NIGHTFAE
+		},
 	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
@@ -680,6 +685,10 @@ function iCD:DRUID(specID)
 				order = 6,
 				ignoreGCD = true,
 				--level = 54,
+			},
+			[132158] = { -- Nature's Swiftness
+				order = 7,
+				ignoreGCD = true,
 			},
 			[29166] = { -- Innervate
 				order = 8,

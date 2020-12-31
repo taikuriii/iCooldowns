@@ -152,6 +152,8 @@ function iCD:GetGenerals(specID)
 			[300728] = { -- Door of Shadows
 				order = 9999, -- Always last
 				covenant = iCD.covenants.VENTHYR,
+				charges = iCD:Soulbinds(1546),
+				stack = iCD:Soulbinds(1546),
 			},
 			[324631] = { -- Fleshcraft
 				order = 9999, -- Always last
@@ -321,15 +323,47 @@ function iCD:GetGenerals(specID)
 			[-168989] = {}, -- Hyperthread Wristwraps
 			[-172666] = {}, -- Corrupted Gladiator's Medallion
 			[-173944] = {}, -- Forbidden Obsidian Claw
+			[-178811] = {}, -- Grim Codex
+			[-184031] = {}, -- Sanguine Vintage
 			[-13446] = { -- Major Combat Healing Potion (HP potion cd)
 				utility = true,
+				stack = true,
+				stackFunc = function()
+					return GetItemCount(171267) or 0 -- Spiritual Healing Potion
+				end,
 			},
 			[-86125] = { -- Greater Holy Protection Potion (DPS potion)
 				utility = true,
 			},
 			[-109076] = { -- Goblin Glider Kit
 				utility = true,
-			}
+				stack = true,
+				stackFunc = function()
+					return GetItemCount(109076) or 0
+				end,
+			},
+			[-5512] = { -- Healthstone
+				utility = true,
+				stack = true,
+				stackFunc = function()
+					return GetItemCount(5512, nil, true) or 0
+				end
+			},
+			[-177278] = { -- Phial of Serenity
+				utility = true,
+				covenant = iCD.covenants.KYRIAN,
+				stack = true,
+				stackFunc = function()
+					return GetItemCount(177278, nil, true) or 0
+				end
+			},
+			[-132516] = { -- Gunshoes
+				utility = true,
+				stack = true,
+				stackFunc = function()
+					return GetItemCount(132516) or 0
+				end,
+			},
 		}
 		t.row5 = { -- Buffs
 			[310143] = { -- Soulshape
@@ -388,6 +422,18 @@ function iCD:GetGenerals(specID)
 				stack = true,
 				stackFunc = function()
 					local amount = select(5, iCD.UnitBuff('player', 'Psychic Shell'))
+					if amount then
+						return math.floor(amount/1e3)
+					else
+						return ""
+					end
+				end,
+			},
+			[344231] = { -- Sanguine Vintage
+				itemReq = 184031,
+				stack = true,
+				stackFunc = function()
+					local amount = select(4, iCD.UnitBuff('player', 'Sanguine Vintage'))
 					if amount then
 						return math.floor(amount/1e3)
 					else
@@ -669,6 +715,10 @@ function iCD:GetGenerals(specID)
 			},
 			[317859] = { -- Draconic Empowerment (Legendary cloak)
 				stack = "+P",
+			},
+			[331939] = { -- Thrill Seeker
+				stack = true,
+				covenant = iCD.covenants.VENTHYR
 			},
 		}
 	return t

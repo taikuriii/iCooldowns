@@ -48,7 +48,7 @@ iCD.setups = {
       from = "top",
       to = "bottom",
       x = 0,
-      y = -77,
+      y = -78,
     }
   },
   row5 = {

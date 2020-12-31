@@ -159,17 +159,24 @@ function iCD:DEMONHUNTER(specID)
 		}
 	elseif specID == 581 then --Vengeance
 		iCD.outOfRangeSpells = {
-			main = 'Shear',
+			main = "Demon's Bite",
 			range = "Consume Magic",
 		}
 		-- Row 1
 		--gcd = 203782,
 		t.power = {
+			pos = {
+				from = "bottomright",
+      	to = "center",
+      	x = -45,
+				y = -72
+			},
+			fontSize = 16,
 			func = function()
-				local p = UnitPower('player', 18)
-				if p < 30 then
+				local p = UnitPower('player', 17)
+				if p < 40 then
 					return p
-				elseif p >= 80 then
+				elseif p >= 120 then
 					return '|cffff0000'..p
 				else
 					return '|cff00ff00'..p
@@ -194,11 +201,11 @@ function iCD:DEMONHUNTER(specID)
 				glow = true,
 				glowSound = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(3, 3, 1))
+					return select(4, GetTalentInfo(1, 3, 1))
 				end,
 				showTimeAfterGCD = true,
 			},
-			[178740] = { -- Immolation Aura
+			[258920] = { -- Immolation Aura
 				order = 6,
 				showTimeAfterGCD = true,
 				stack = true,
@@ -212,14 +219,6 @@ function iCD:DEMONHUNTER(specID)
 					end
 				end,
 			},
-			[212084] = { -- Fel Devastation
-				order = 9,
-				cost = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(6, 3, 1))
-				end,
-				showTimeAfterGCD = true,
-			},
 			[204596] = { -- Sigil of Flame
 				order = 8,
 				showTimeAfterGCD = true,
@@ -229,6 +228,11 @@ function iCD:DEMONHUNTER(specID)
 				range = true,
 				showTimeAfterGCD = true,
 				customRangeSpell = "Consume Magic",
+			},
+			[212084] = { -- Fel Devastation
+				order = 15,
+				cost = true,
+				showTimeAfterGCD = true,
 			},
 		}
 		t.row2 = {
@@ -241,7 +245,7 @@ function iCD:DEMONHUNTER(specID)
 			[263648] = { -- Soul Barrier
 				order = 2,
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 3, 1))
+					return select(4, GetTalentInfo(6, 3, 1))
 				end,
 				cost = true,
 			},
@@ -294,7 +298,7 @@ function iCD:DEMONHUNTER(specID)
 			[278326] = {}, -- Consume Magic
 		}
 		t.row5 = {
-			[207744] = { -- Fiery Brand
+			[207771] = { -- Fiery Brand
 				debuff = true,
 			},
 			[187827] = {}, -- Metamorphosis
