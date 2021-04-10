@@ -286,6 +286,7 @@ function iCD:GetGenerals(specID)
 				return race == 'Dwarf'
 			end,
 			},
+			[-179331] = {}, -- Blood-Spattered Scale
 			[-139320] = {}, -- Ravaged Seed Pod
 			[-140797] = {}, -- Fang of Tichondrius
 			[-140789] = {}, -- Animated Exoskeleton

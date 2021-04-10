@@ -112,6 +112,13 @@ function iCD:DEMONHUNTER(specID)
 				end,
 				showTimeAfterGCD = true,
 			},
+			[258860] = { -- Essence Break
+				order = 10,
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 3, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
 		}
 		t.row2 = {
 			[191427] = { -- Metamorphosis
@@ -139,6 +146,7 @@ function iCD:DEMONHUNTER(specID)
 				ignoreGCD = true,
 			},
 			[217832] = {}, -- Imprison
+			[221527] = {}, -- Imprison (pvp)
 			[188501] = {}, -- Spectral Sight
 		}
 		t.buffsI = {
@@ -174,7 +182,7 @@ function iCD:DEMONHUNTER(specID)
 			fontSize = 16,
 			func = function()
 				local p = UnitPower('player', 17)
-				if p < 40 then
+				if p < 30 then
 					return p
 				elseif p >= 120 then
 					return '|cffff0000'..p

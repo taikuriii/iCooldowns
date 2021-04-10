@@ -3,11 +3,21 @@ function iCD:SHAMAN(specID)
 	local temp = {}
 	temp.spec = {}
 	temp.all = {}
-	temp.all.row1 = {}
+	temp.all.row1 = {
+		[326059] = { -- Primordial Wave
+			order = 9999,
+			showTimeAfterCast = true,
+			covenant = iCD.covenants.NECROLORD,
+			range = true,
+		},
+	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
 	temp.all.row4 = {}
-	temp.all.row5 = {}
+	temp.all.row5 = {
+		[108271] = {}, -- Astral Shift
+		[79206] = {}, -- Spiritwalker's Grace
+	}
 	temp.all.buffsC = {}
 	temp.all.buffsI = {}
 	local t = temp.spec
@@ -33,7 +43,7 @@ function iCD:SHAMAN(specID)
 			[188389] = { -- Flame Shock
 				order = 1,
 				range = true,
-				showTimeAfterGCD = true,
+				showTimeAfterCast = true,
 			},
 			[51505] = {
 				-- Lava Burst
@@ -43,15 +53,24 @@ function iCD:SHAMAN(specID)
 				charges = select(4, GetTalentInfo(1, 2, 1)),
 				glow = true,
 				glowSound = true,
-				showTimeAfterGCD = true,
+				showTimeAfterCast = true,
 			},
 			[117014] = {
 				-- Elemental Blast
 				order = 5,
 				range = true,
 				showFunc = function()
-					return select(4, GetTalentInfo(1, 3, 1))
-				end
+					return select(4, GetTalentInfo(2, 3, 1))
+				end,
+				showTimeAfterCast = true,
+			},
+			[210714] = { -- Icefury
+				order = 8,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 3, 1))
+				end,
+				showTimeAfterCast = true,
 			},
 			[192222] = {
 				-- Liquid Magma Totem
@@ -59,15 +78,24 @@ function iCD:SHAMAN(specID)
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 3, 1))
 				end,
-				showTimeAfterGCD = true,
+				showTimeAfterCast = true,
 			},
+			[320125] = { -- Echoing Shock
+				order = 3,
+				showFunc = function()
+					return select(4, GetTalentInfo(2, 2, 1))
+				end,
+				showTimeAfterCast = true,
+			},
+
 		}
 		t.row2 = {
 			[191634] = { -- Stormkeeper
 				order = 2,
 				showFunc = function()
 					return select(4, GetTalentInfo(7, 2, 1))
-				end
+				end,
+				showTimeAfterCast = true,
 			},
 			[114050] = { -- Ascendance
 				order = 4,
@@ -93,7 +121,14 @@ function iCD:SHAMAN(specID)
 			[198103] = {
 				-- Earth Elemental
 				order = 6
-			}
+			},
+			[5394] = { -- Healing Stream Totem
+				order = 20,
+			},
+			[79206] = { -- Spiritwalker's Grace
+				order = 18,
+				ignoreGCD = true,
+			},
 		}
 		t.row4 = {
 			[51886] = {}, -- Cleanse Spirit
@@ -114,6 +149,16 @@ function iCD:SHAMAN(specID)
 				-- Elemental Focus
 				stack = true
 			},
+			[273453] = { -- Lava Shock, Azerite trait
+				stack = true,
+				azerite = 178,
+			},
+
+		}
+		t.buffsI = {
+			[188389] = { -- Flame Shock
+				debuff = true
+			},
 			[191634] = {
 				-- Stormkeeper
 				stack = true,
@@ -121,17 +166,8 @@ function iCD:SHAMAN(specID)
 					return select(4, GetTalentInfo(7, 2, 1))
 				end
 			},
-			[273453] = { -- Lava Shock, Azerite trait
+			[210714] = { -- Icefury
 				stack = true,
-				azerite = 178,
-			},
-		}
-		t.buffsI = {
-			[188389] = { -- Flame Shock
-				debuff = true
-			},
-			[286976] = { -- Tectonic Thunder, Azerite trait, instant chain lightning
-				azerite = 417,
 			},
 		}
 	elseif specID == 263 then -- Enhancement
@@ -268,18 +304,20 @@ function iCD:SHAMAN(specID)
 		t.row1 = {
 			[51505] = {
 				-- Lava Burst
-				order = 3,
+				order = 5,
 				range = true,
 				cost = true,
 				stack = select(4, GetTalentInfo(2, 1, 1)),
 				charges = select(4, GetTalentInfo(2, 1, 1)),
 				glow = true,
-				glowSound = true
+				glowSound = true,
+				showTimeAfterCast = true,
 			},
-			[188838] = { -- Flame Shock
+			[188389] = { -- Flame Shock
 				order = 4,
 				range = true,
 				cost = true,
+				showTimeAfterCast = true,
 			},
 			[61295] = {
 				-- Riptide
@@ -288,11 +326,35 @@ function iCD:SHAMAN(specID)
 				cost = true,
 				charges = select(4, GetTalentInfo(2, 1, 1)),
 				stack = select(4, GetTalentInfo(2, 1, 1)),
+				showTimeAfterCast = true,
+			},
+			[73685] = { -- Unleash Life
+				order = 3,
+				cost = true,
+				showTimeAfterCast = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
+				end,
+				stack = true,
+				stackFunc = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Unleash Life')
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura, '%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
 			},
 			[73920] = { -- Healing Rain
-				order = 6,
+				order = 4,
 				cost = true,
-				range = true
+				range = true,
+				showTimeAfterCast = true,
 			},
 			[5394] = {
 				-- Healing Stream Totem
@@ -302,13 +364,25 @@ function iCD:SHAMAN(specID)
 				stack = select(4, GetTalentInfo(2, 1, 1)),
 				showFunc = function()
 					return not select(4, GetTalentInfo(6, 3, 1))
-				end
+				end,
+				showTimeAfterCast = true,
+			},
+			[157153] = { -- Cloudburst Totem
+				order = 7,
+				range = true,
+				charges =  select(4, GetTalentInfo(2, 1, 1)),
+				stack = select(4, GetTalentInfo(2, 1, 1)),
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 3, 1))
+				end,
+				showTimeAfterCast = true,
 			},
 			[198838] = { -- Earthen Wall Totem
 				order = 8,
 				showFunc = function()
 					return select(4, GetTalentInfo(4, 2, 1))
-				end
+				end,
+				showTimeAfterCast = true,
 			},
 		}
 		t.row2 = {
@@ -319,11 +393,20 @@ function iCD:SHAMAN(specID)
 
 			[108280] = {
 				-- Healing tide totem
-				order = 4
+				order = 4,
+				showTimeAfterCast = true,
 			},
 			[98008] = {
 				-- Spirit Link Totem
-				order = 5
+				order = 5,
+				showTimeAfterCast = true,
+			},
+			[114052] = { -- Ascendance
+				showTimeAfterCast = true,
+				order = 7,
+				showFunc = function()
+					return select(4, GetTalentInfo(7, 3, 1))
+				end
 			},
 			[108271] = {
 				-- Astral Shift
@@ -337,26 +420,19 @@ function iCD:SHAMAN(specID)
 			[51514] = {}, -- Hex
 			[192058] = {}, -- Capacitor Totem
 			[192077] = { -- Wind Rush Totem
-			showFunc = function()
-				return select(4, GetTalentInfo(5, 3, 1))
-			end
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 3, 1))
+				end
 			},
 			[8143] = {}, -- Tremor Totem
+			[16191] = {}, -- Mana Tide Totem
 		}
 		t.buffsC = {
 			[114050] = {
 				-- Ascendance
 				showFunc = function()
-					return select(4, GetTalentInfo(7, 1, 1))
+					return select(4, GetTalentInfo(7, 3, 1))
 				end
-			},
-			[16246] = {
-				-- Elemental Focus
-				stack = true
-			},
-			[205495] = {
-				-- Stormkeeper
-				stack = true
 			},
 			[79206] = {}, -- Spirit Walker's Grace
 
@@ -373,7 +449,7 @@ function iCD:SHAMAN(specID)
 					return select(4, GetTalentInfo(6, 3, 1))
 				end
 			},
-			[188838] = {
+			[188389] = {
 				-- Flame Shock
 				debuff = true
 			},

@@ -25,13 +25,42 @@ function iCD:WARRIOR(specID)
 	local temp = {}
 	temp.spec = {}
 	temp.all = {}
-	temp.all.row1 = {}
+	temp.all.row1 = {
+		[307865] = { -- Spear of Bastion
+			order = 999999, -- Always last
+			showTimeAfterGCD = true,
+			range = true,
+			covenant = iCD.covenants.KYRIAN
+		},
+		[324143] = { -- Conqueror's Banner
+			order = 9999, -- Always last
+			covenant = iCD.covenants.NECROLORD,
+			showTimeAfterGCD = true,
+		},
+	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
-	temp.all.row4 = {}
-	temp.all.row5 = {}
-	temp.all.buffsC = {}
-	temp.all.buffsI = {}
+	temp.all.row4 = {
+		[1161] = { -- Challenging Shout
+			ignoreGCD = true,
+		},
+		[64382] = {}, -- Shattering Throw
+		[12323] = {}, -- Piercing Howl
+		[5246] = {}, -- Intimidating Shout
+	}
+	temp.all.row5 = {
+		[23920] = {}, -- Spell Reflection
+	}
+	temp.all.buffsC = {
+
+	}
+	temp.all.buffsI = {
+		[46924] = {}, -- Bladestorm
+		[227847] = {}, -- Bladestorm (arms only?)
+		[324143] = {}, -- Conqueror's Banner
+		[107574] = {}, -- Avatar
+		[1719] = {}, -- Recklessness (lege?)
+	}
 	local t = temp.spec
 	t.row1 = {}
 	t.row2 = {}
@@ -148,6 +177,8 @@ function iCD:WARRIOR(specID)
 				showTimeAfterGCD = true,
 				glow = true,
 				glowSound = true,
+				stack = select(4, GetTalentInfo(7, 2, 1)),
+				charges = select(4, GetTalentInfo(7, 2, 1)),
 			},
 			[260643] = { -- Skullsplitter
 				order = 7,
@@ -191,20 +222,27 @@ function iCD:WARRIOR(specID)
 			[97462] = { -- Commanding Shout
 				order = 12,
 			},
+			[3411] = { -- Intervene
+				level = 43,
+				order = 15,
+				ignoreGCD = true,
+			},
 			[118038] = { -- Die by the Sword
 				order = 11,
 				ignoreGCD = true,
 			},
+			[23920] = { -- Spell Reflection
+				order = 14,
+				ignoreGCD = true,
+			},
 			[107574] = { -- Avatar
 				order = 4,
-				row = 2,
 				showFunc = function()
 					return select(4, GetTalentInfo(6, 2, 1))
 				end,
 			},
 			[260708] = { -- Sweeping Strikes
 				order = 5,
-				row = 2,
 			},
 		}
 		t.row3 = {
@@ -220,22 +258,19 @@ function iCD:WARRIOR(specID)
 				charges = IsEquippedItem(143728),
 				stack = IsEquippedItem(143728),
 			},
+			[190456] = {}, -- Ignore Pain
 		}
 		t.row5 = {
+			[118038] = {}, -- Die by the Sword
 		}
 		t.buffsI = {
-			[215570] = { -- Wrecking Ball
-				showFunc = function()
-					return select(4, GetTalentInfo(3, 1, 1))
-				end,
-			},
 			[206333] = { -- Taste for Blood
 				stack = true,
 			},
-			[275540] = { -- Test of Might
-				azerite = 226,
-			},
 			[208086] = { -- Colossus Smash
+				debuff = true,
+			},
+			[262115] = { -- Deep Wounds
 				debuff = true,
 			},
 			[184362] = {}, -- Enrage
@@ -253,7 +288,6 @@ function iCD:WARRIOR(specID)
 			[278826] = {}, -- Crushing Assault
 		}
 		t.buffsC = {
-			[107574] = {}, -- Avatar
 			[18499] = {}, -- Berserker Rage
 			[197690] = {}, -- Defensive Stance
 		}
@@ -357,6 +391,15 @@ function iCD:WARRIOR(specID)
 			[1719] = { -- Recklessness
 				order = 3,
 			},
+			[202168] = { -- Impending Victory
+				order = 8,
+				range = true,
+				cost = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(2, 2, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
 			[97462] = { -- Commanding Shout
 				order = 12,
 			},
@@ -383,8 +426,10 @@ function iCD:WARRIOR(specID)
 			[6544] = {}, -- Heroic Leap
 			[57755] = {}, -- Heroic Throw
 			[5246] = {}, -- Intimidating Shout
+			[190456] = {}, -- Ignore Pain
 		}
 		t.row5 = {
+			[184364] = {}, -- Enraged Regeneration
 		}
 		t.buffsI = {
 			[85739] = { -- Whirlind
@@ -394,12 +439,11 @@ function iCD:WARRIOR(specID)
 			[32216] = {}, -- Victory Rush
 		}
 		t.buffsC = {
-			[1719] = {}, -- Battly Cry
 			[18499] = {}, -- Berserker Rage
-			[184364] = {}, -- Enraged Regeneration
 			[213858] = {}, -- Battle Trance (pvp)
 		}
 	elseif specID == 73 then --Protection
+		local bolsterActive = select(4, GetTalentInfo(7, 3, 1))
 		--gcd = 20243, -- Devastate
 		iCD.outOfRangeSpells = {
 			main = 'Shield Slam',
@@ -408,9 +452,7 @@ function iCD:WARRIOR(specID)
 		t.power = {
 			func = function()
 				local power = UnitPower('player', 1)
-				if power >= 60 then
-					return iCD.colors.green .. power
-				elseif iCD.UnitBuff('player', 'Vengeance: Ignore Pain') and power >= 39 then
+				if power >= 40 then
 					return iCD.colors.green .. power
 				else
 					return power
@@ -424,17 +466,10 @@ function iCD:WARRIOR(specID)
 				range = true,
 				glow = true,
 				glowSound = true,
-				stack = true,
 				level = 3,
-				stackFunc = function()
-					if iCD.UnitBuff('player', "Kakushan's Stormscale Gauntlets") then
-						return iCD.colors.green .. '+'
-					else
-						return ''
-					end
-				end,
 				showTimeAfterGCD = true,
 			},
+			--[[
 			[6572] = { -- Revenge
 				order = 7,
 				row = 1,
@@ -460,6 +495,7 @@ function iCD:WARRIOR(specID)
 				customRangeSpell = 'Shield Slam',
 				showTimeAfterGCD = true,
 			},
+			--]]
 			[6343] = { -- Thunder Clap
 				order = 5,
 				row = 1,
@@ -546,8 +582,10 @@ function iCD:WARRIOR(specID)
 				ignoreGCD = true,
 				cost = true,
 				AM = function()
-					local _, _, ls = iCD.UnitBuff('player', "Last Stand", nil, 'player')
-					if ls then return true end
+					if bolsterActive then
+						local _, _, ls = iCD.UnitBuff('player', "Last Stand", nil, 'player')
+						if ls then return true end
+					end
 					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Shield Block')
 					if expirationTime then
 						local dura = expirationTime - GetTime()
@@ -633,6 +671,7 @@ function iCD:WARRIOR(specID)
 			[204488] = { -- Focused Rage
 				stack = true,
 			},
+			[5302] = {}, -- Revenge!
 			--[[
 			[202573] = { -- Vengeance: Revenge
 				showFunc = function()
@@ -649,7 +688,6 @@ function iCD:WARRIOR(specID)
 			--]]
 		}
 		t.buffsC = {
-			[1719] = {}, -- Battly Cry
 			[107574] = {}, -- Avatar
 			[18499] = {}, -- Berserker Rage
 			[202289] = {  -- Renewed Fury

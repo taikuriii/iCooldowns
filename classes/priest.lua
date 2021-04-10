@@ -3,10 +3,18 @@ function iCD:PRIEST(specID)
 	local temp = {}
 	temp.spec = {}
 	temp.all = {}
-	temp.all.row1 = {}
+	temp.all.row1 = {
+		[327661] = { -- Fae Guardians
+			order = 999999, -- Always last
+			showTimeAfterCast = true,
+			covenant = iCD.covenants.NIGHTFAE
+		},
+	}
 	temp.all.row2 = {}
 	temp.all.row3 = {}
-	temp.all.row4 = {}
+	temp.all.row4 = {
+		[19236] = {}, -- Desperate Prayer
+	}
 	temp.all.row5 = {}
 	temp.all.buffsC = {}
 	temp.all.buffsI = {}
@@ -233,19 +241,16 @@ function iCD:PRIEST(specID)
 			[205448] = { -- Void Bolt
 				order = 2,
 				range = true,
-				showTimeAfterGCD = true,
-			},
-			[205351] = { -- Shadow Word: Void
-				order = 3,
-				range = true,
-				glow = true,
-				glowSound = true,
 				stack = true,
-				charges = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(1, 3, 1))
+				stackFunc = function()
+						local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Voidform', true)
+						if expirationTime then
+							return "+"
+						else
+							return ''
+						end
 				end,
-				showTimeAfterGCD = true,
+				showTimeAfterCast = true,
 			},
 			[8092] = { -- Mind Blast
 				order = 3,
@@ -253,21 +258,9 @@ function iCD:PRIEST(specID)
 				glow = true,
 				glowSound = true,
 				range = true,
-				--stack = IsEquippedItem(132864),
-				--charges = IsEquippedItem(132864),
-				showFunc = function()
-					return not select(4, GetTalentInfo(1, 3, 1))
-				end,
 				showTimeAfterGCD = true,
-			},
-			[263346] = { -- Dark Void
-				order = 5,
-				range = true,
-				showFunc = function()
-					return select(4, GetTalentInfo(3, 3, 1))
-				end,
-				showTimeAfterGCD = true,
-				range = true,
+				charges = true,
+				stack = true,
 			},
 			[32379] = { -- Shadow Word: Death
 				range = true,
@@ -276,9 +269,6 @@ function iCD:PRIEST(specID)
 				charges = true,
 				stack = true,
 				glowSound = "text2",
-				showFunc = function()
-					return select(4, GetTalentInfo(5, 2, 1))
-				end,
 			},
 			[205385] = { -- Shadow Crash
 				order = 7,
@@ -288,11 +278,24 @@ function iCD:PRIEST(specID)
 				end,
 				showTimeAfterGCD = true,
 			},
+			[341374] = { -- Damnation
+				order = 7,
+				range = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(6, 1, 1))
+				end,
+				showTimeAfterGCD = true,
+			},
+
 		}
 		t.row2 = {
+			[228260] = { -- Void Eruption
+				order = 5,
+				showTimeAfterCast = true,
+			},
 			[34433] = { -- Shadowfiend
 				order = 6,
-				showTimeAfterGCD = true,
+				showTimeAfterCast = true,
 			},
 			[17] = { -- Power Word: Shield
 				order = 7,
@@ -309,11 +312,52 @@ function iCD:PRIEST(specID)
 			},
 		}
 		t.row3 = {
-			[194249] = { -- Voidform
+			[34914] = { -- Vampiric Touch
+				order = 4,
+				customText = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('target', 'Vampiric Touch', true)
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura, '%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
+			},
+			[589] = { -- Shadow Word:Pain
 				order = 3,
 				customText = function()
-					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', "Voidform", nil, 'player')
-					return count or ""
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('target', 'Shadow Word: Pain', true)
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura, '%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
+				end,
+			},
+			[335467] = { -- Devouring Plague
+				order = 5,
+				customText = function()
+					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitDebuff('target', 'Devouring Plague', true)
+					if expirationTime then
+						local dura = expirationTime - GetTime()
+						if dura > 5 then
+							return dura, '%.0f'
+						else
+							return dura, '|cffff1a1a%.1f'
+						end
+					else
+						return ''
+					end
 				end,
 			},
 		}
@@ -340,15 +384,6 @@ function iCD:PRIEST(specID)
 		t.buffsC = {
 		}
 		t.buffsI = {
-			[589] = { -- Shadow Word: Pain
-				debuff = true,
-			},
-			[34914] = { -- Vampiric Touch
-				debuff = true,
-			},
-			[288343] = { -- Thought Harvester (Azerite, + Mind sear dmg)
-				stack = "+MS"
-			},
 		}
 	end
 	return temp

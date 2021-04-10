@@ -714,7 +714,7 @@ function iCD:updateFrame(id, row)
 						end
 					end
 					if fade then
-						iCD.frames[row][id]:SetAlpha(0.35)
+						iCD.frames[row][id]:SetAlpha(.35)
 					else
 						iCD.frames[row][id]:SetAlpha(1)
 					end
@@ -827,6 +827,7 @@ function iCD:CreateNewFrame(id, row)
 	iCD.frames[row][id].tex:SetAllPoints(iCD.frames[row][id])
 	--Cooldown
 	iCD.frames[row][id].cooldownText = iCD.frames[row][id]:CreateFontString()
+	iCD.frames[row][id].cooldownText:SetIgnoreParentAlpha(true)
 
 	if row == 'row5' then
 		iCD.frames[row][id].cooldownText:SetFont(iCD.font, iCD.fontSize+4, 'OUTLINE')
@@ -1734,6 +1735,7 @@ addon:RegisterUnitEvent('UNIT_HEALTH', 'player')
 addon:RegisterUnitEvent('UNIT_ABSORB_AMOUNT_CHANGED', 'player')
 addon:RegisterUnitEvent('UNIT_HEAL_ABSORB_AMOUNT_CHANGED', 'player')
 addon:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
+addon:RegisterUnitEvent('UNIT_TARGET', 'player')
 
 local function updateHealth()
 	local hp = UnitHealth('player')
@@ -1764,6 +1766,9 @@ end
 function addon:UNIT_ABSORB_AMOUNT_CHANGED()
 	iCD:updateEH()
 	addon:UNIT_AURA('player')
+end
+function addon:UNIT_TARGET()
+	addon:UNIT_AURA('target')
 end
 function addon:UNIT_HEAL_ABSORB_AMOUNT_CHANGED()
 	iCD:updateEH()
@@ -2058,30 +2063,58 @@ do
 	addon:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 	local f = CreateFrame("frame")
 	local rangeItems = {
-		{r = 2, id = 37727}, -- Ruby Acorn
-		{r = 3, id = 42732}, -- Everfrost Razor
-		{r = 4, id = 129055}, -- Shoe Shine Kit
-		{r = 5, id = 8149}, -- Voodoo Charm
-		{r = 7, id = 61323}, -- Ruby Seeds
-		{r = 8, id = 34368}, -- Attuned Crystal Cores
-		{r = 10, id = 32321}, -- Sparrowhawk Net
-		{r = 15, id = 33069}, -- Sturdy Rope
-		{r = 20, id = 10645}, -- Gnomish Death Ray
-		{r = 25, id = 24268}, -- Netherweave Net
-		{r = 30, id = 835}, -- Large Rope Net
-		{r = 35, id = 24269}, -- Heavy Netherweave Net
-		{r = 38, id = 140786}, -- Ley Spider Eggs
-		{r = 40, id = 28767}, -- The Decapitator
-		{r = 45, id = 23836}, -- Goblin Rocket Launcher
-		{r = 50, id = 116139}, -- Haunting Memento
-		{r = 55, id = 74637}, -- Kiryn's Poison Vial
-		{r = 60, id = 32825}, -- Soul Cannon
-		{r = 70, id = 41265}, -- Eyesore Blaster
-		{r = 80, id = 35278}, -- Reinforced Net
-		{r = 90, id = 133925}, -- Fel Lash
-		{r = 100, id = 33119}, -- Malister's Frost Wand
-		{r = 150, id = 46954}, -- Flaming Spears
-		{r = 200, id = 75208}, -- Rancher's Lariat
+		hostile = {
+			{r = 2, id = 37727}, -- Ruby Acorn
+			{r = 3, id = 42732}, -- Everfrost Razor
+			{r = 4, id = 129055}, -- Shoe Shine Kit
+			{r = 5, id = 8149}, -- Voodoo Charm
+			{r = 7, id = 61323}, -- Ruby Seeds
+			{r = 8, id = 34368}, -- Attuned Crystal Cores
+			{r = 10, id = 32321}, -- Sparrowhawk Net
+			{r = 15, id = 33069}, -- Sturdy Rope
+			{r = 20, id = 10645}, -- Gnomish Death Ray
+			{r = 25, id = 24268}, -- Netherweave Net
+			{r = 30, id = 835}, -- Large Rope Net
+			{r = 35, id = 24269}, -- Heavy Netherweave Net
+			{r = 38, id = 140786}, -- Ley Spider Eggs
+			{r = 40, id = 28767}, -- The Decapitator
+			{r = 45, id = 23836}, -- Goblin Rocket Launcher
+			{r = 50, id = 116139}, -- Haunting Memento
+			{r = 55, id = 74637}, -- Kiryn's Poison Vial
+			{r = 60, id = 32825}, -- Soul Cannon
+			{r = 70, id = 41265}, -- Eyesore Blaster
+			{r = 80, id = 35278}, -- Reinforced Net
+			{r = 90, id = 133925}, -- Fel Lash
+			{r = 100, id = 33119}, -- Malister's Frost Wand
+			{r = 150, id = 46954}, -- Flaming Spears
+			{r = 200, id = 75208}, -- Rancher's Lariat
+		},
+		friendly = {
+			{r = 2, id = 37727}, -- Ruby Acorn
+			{r = 3, id = 42732}, -- Everfrost Razor
+			{r = 4, id = 129055}, -- Shoe Shine Kit
+			{r = 5, id = 8149}, -- Voodoo Charm
+			{r = 7, id = 61323}, -- Ruby Seeds
+			{r = 8, id = 34368}, -- Attuned Crystal Cores
+			{r = 10, id = 32321}, -- Sparrowhawk Net
+			{r = 15, id = 1251}, -- Linen Bandage
+			{r = 20, id = 21519}, -- Mistletoe
+			{r = 25, id = 31463}, -- Zezzak's Shard
+			{r = 30, id = 34191}, -- Handful of Snowflakes
+			{r = 35, id = 18904}, -- Zorbin's Ultra-Shrinker
+			{r = 38, id = 140786}, -- Ley Spider Eggs
+			{r = 40, id = 34471}, -- Vial of the Sunwell
+			{r = 45, id = 32698}, -- Wrangling Rope
+			{r = 50, id = 116139}, -- Haunting Memento
+			{r = 55, id = 74637}, -- Kiryn's Poison Vial
+			{r = 60, id = 32825}, -- Soul Cannon
+			{r = 70, id = 34191}, -- Eyesore Blaster
+			{r = 80, id = 35278}, -- Reinforced Net
+			{r = 90, id = 133925}, -- Fel Lash
+			{r = 100, id = 41058}, -- Hyldnir Harpoon
+			{r = 150, id = 46954}, -- Flaming Spears
+			{r = 200, id = 75208}, -- Rancher's Lariat
+		},
 	}
 	local nps = {}
 	local frames = {}
@@ -2110,12 +2143,23 @@ do
 		end
 		local range = 0
 		local lastRange = 0
-		for _,v in ipairs(rangeItems) do
-			if not IsItemInRange(v.id, unitID) then
-				range = v.r
-			else
-				lastRange = v.r
-				break
+		if UnitIsFriend("player", unitID) then
+			for _,v in ipairs(rangeItems.friendly) do
+				if not IsItemInRange(v.id, unitID) then
+					range = v.r
+				else
+					lastRange = v.r
+					break
+				end
+			end
+		else
+			for _,v in ipairs(rangeItems.hostile) do
+				if not IsItemInRange(v.id, unitID) then
+					range = v.r
+				else
+					lastRange = v.r
+					break
+				end
 			end
 		end
 		return rangeID, rangeColors[rangeID], range, lastRange

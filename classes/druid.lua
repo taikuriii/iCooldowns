@@ -92,6 +92,16 @@ function iCD:DRUID(specID)
 				end,
 				showTimeAfterCast = true,
 			},
+			[22812] = { -- Barkskin
+				order = 3,
+				ignoreGCD = true,
+			},
+			[319454] = { -- Heart of the Wild
+				order = 20,
+				showFunc = function()
+					return select(4, GetTalentInfo(4, 3, 1))
+				end,
+			},
 		}
 		t.row3 = {
 			[190984] = { -- Solar Wrath
@@ -117,7 +127,7 @@ function iCD:DRUID(specID)
 				end,
 			},
 			[194153] = { -- Lunar Strike
-				order = 2,
+				order = 4,
 				cost = true,
 				range = true,
 				customText = function()
@@ -406,11 +416,6 @@ function iCD:DRUID(specID)
 					local form = GetShapeshiftFormID() or 0
 					return form == BEAR_FORM
 				end,
-				stack = true,
-				stackFunc = function()
-					local count, duration, expirationTime, value1, value2, value3 = iCD.UnitBuff('player', 'Natural Defenses', nil, 'player')
-					return count or ''
-				end,
 				showTimeAfterGCD = true,
 			},
 			[8921] = { -- Moonfire
@@ -624,6 +629,22 @@ function iCD:DRUID(specID)
 				cost = true,
 				level = 40,
 				showTimeAfterCast = true,
+			},
+			[203651] = { -- Overgrowth
+				order = 10,
+				cost = true,
+				showTimeAfterCast = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(5, 3, 1))
+				end,
+			},
+			[102351] = { -- Cenarion Ward
+				order = 10,
+				cost = true,
+				showTimeAfterCast = true,
+				showFunc = function()
+					return select(4, GetTalentInfo(1, 3, 1))
+				end,
 			},
 			[197626] = { -- Starsurge
 				order = 20,
