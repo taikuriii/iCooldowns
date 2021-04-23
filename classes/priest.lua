@@ -4,13 +4,15 @@ function iCD:PRIEST(specID)
 	temp.spec = {}
 	temp.all = {}
 	temp.all.row1 = {
+
+	}
+	temp.all.row2 = {
 		[327661] = { -- Fae Guardians
-			order = 999999, -- Always last
-			showTimeAfterCast = true,
-			covenant = iCD.covenants.NIGHTFAE
+		order = 0, --Always first
+		showTimeAfterCast = true,
+		covenant = iCD.covenants.NIGHTFAE
 		},
 	}
-	temp.all.row2 = {}
 	temp.all.row3 = {}
 	temp.all.row4 = {
 		[19236] = {}, -- Desperate Prayer
@@ -37,22 +39,33 @@ function iCD:PRIEST(specID)
 			end,
 		}
 		t.row1 = {
+			[8092] = { -- Mind Blast
+				order = 1,
+				range = true,
+				showTimeAfterGCD = true,
+			},
 			[47540] = { -- Penance
-				order = 3,
+				order = 2,
 				cost = true,
 				range = true,
 				showTimeAfterCast = true,
 			},
 			[129250] = { -- Power Word: Solace
-				order = 1,
+				order = 4,
 				range = true,
 				showTimeAfterCast = true,
 				showFunc = function()
 					return select(4, GetTalentInfo(3, 3, 1))
 				end,
 			},
+			[32379] = { -- Shadow Word: Death
+				range = true,
+				order = 3,
+				glow = true,
+				glowSound = "text2",
+			},
 			[214621] = { -- Schism
-				order = 6,
+				order = 5,
 				range = true,
 				cost = true,
 				showTimeAfterCast = true,
@@ -66,8 +79,16 @@ function iCD:PRIEST(specID)
 				charges = true,
 				stack = true,
 			},
+			[110744] = { -- Divine Star
+				order = 6,
+				range  = true,
+				cost = true,
+				showFunc = function()
+				return select(4, GetTalentInfo(6, 2, 1))
+			end,
+			},
 			[120517] = { -- Halo
-				order = 10,
+				order = 8,
 				range  = true,
 				cost = true,
 				showFunc = function()
@@ -266,8 +287,6 @@ function iCD:PRIEST(specID)
 				range = true,
 				order = 6,
 				glow = true,
-				charges = true,
-				stack = true,
 				glowSound = "text2",
 			},
 			[205385] = { -- Shadow Crash
@@ -290,15 +309,19 @@ function iCD:PRIEST(specID)
 		}
 		t.row2 = {
 			[228260] = { -- Void Eruption
-				order = 5,
+				order = 4,
+				showTimeAfterCast = true,
+			},
+			[10060] = { -- Power Infusion
+				order = 6, 
 				showTimeAfterCast = true,
 			},
 			[34433] = { -- Shadowfiend
-				order = 6,
+				order = 7,
 				showTimeAfterCast = true,
 			},
 			[17] = { -- Power Word: Shield
-				order = 7,
+				order = 8,
 			},
 			[586] = { -- Fade
 				order = 9,
